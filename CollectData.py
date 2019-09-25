@@ -3,7 +3,9 @@ Class Files for CollectData Class
 Captures Images through Raspberry Pi camera
 Captures Command Signals
 Combines [Image, Command]
-pickles them and stores to a folder with name Examples%d (input string)
+pickles them and stores to a folder with name Examples%d or Test%d (input string)
+Manish Mahajan
+25 Sep 2019
 '''
 # import the necessary packages
 from yaml import load, Loader
@@ -58,9 +60,9 @@ Class CollectData(object):
         self.camera = camera
         self.args = args
         pass
-        
 
-    def collectdata(self,get_commands=get_command):
+
+    def collect_data(self,get_commands=get_command):
     	rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
     	Max_Frames = self.args.record_time*self.camera.framerate
     	frame_num = 0
@@ -68,7 +70,7 @@ Class CollectData(object):
     	for frame in self.camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
     		image = rawCapture.array
     		commands = get_commands()
-    		#combine with control data into example
+    		#combine with command data into example
     		data = [image, commands]
     		#write to File
     		filename = './'+dirName+'/'+'data%04d'%frame_num
@@ -76,7 +78,6 @@ Class CollectData(object):
     		# clear the stream in preparation for the next frame
     		rawCapture.truncate(0)
     		frame_num+=1
-    		# if the `q` key was pressed, break from the loop
     		if frame_num == Max_Frames:
     			break
         pass
@@ -90,8 +91,10 @@ def main():
     parser.add_argument('--example', default='1')
     parser.add_argument('--record_time', default=10)
     parser.add_argument('--framerate',default=30)
+	parser.add_argument('--selfdrive',default=False)
+	parser.add_argument('--collectdata',default=False)
     args = parser.parse_args()
-    c = CollectData()
-    c.collectdata()
+    c = CollectData(args)
+    c.collect_data()
 if __name__=="__main__":
         main()

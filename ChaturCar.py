@@ -5,7 +5,7 @@ Car has a steering motor and a driving motor
 
 Steering and Drive Commands for Training are received through a Web GUI
 Manish Mahajan
-24 September 2019
+25 September 2019
 '''
 
 import logging
@@ -25,6 +25,12 @@ import piconzero as pz
 class Car(object):
     def __init__(self):
         pass
+    def drive(self,commands):
+        #implemented specific to each car subclass
+        pass
+    def stop(self):
+        self.drive([0,0])
+        pass
 
 class ChaturCar(Car):
     # Special subclass of Car class with a steering motor and drive motor
@@ -34,17 +40,41 @@ class ChaturCar(Car):
         super(ChaturCar,self).__init__()
         pz.init()
         pass
-
     def drive(self,commands):
         steer_command = commands[0]
         drive_command = commands[1]
         pz.setMotor(0,steer_command)
         pz.setMotor(1,drive_command)
         pass
+    def forward(self,speed=100):
+        self.drive([0,speed])
+    def reverse(self,speed=100):
+        self.drive([0,-speed])
+    def steer_left(self,speed=100):
+        self.drive([-speed,0])
+    def steer_right(self,speed=100):
+        self.drive([speed,0])
+    def test(self):
+        print('Testing Car')
+        print('Forward 3 seconds')
+        self.forward()
+        time.sleep(3)
+        self.stop()
+        print('Backward 3 seconds')
+        self.reverse()
+        time.sleep(3)
+        self.stop()
+        print('Test Steering')
+        self.steer_left()
+        time.sleep(1)
+        self.steer_right()
+        time.sleep(1)
+        self.stop()
+        print('Test Circle')
+        self.drive([50,50])
+        time.sleep(3)
+        self.stop()
 
-    def stop(self):
-        self.drive([0,0])
-        pass
 
 class Driver(object):
     def __init__(self,car,args):
@@ -59,14 +89,14 @@ class ChaturDriver(Driver):
             self.commands = [0,0] #initialise commands
             self._lock=threading.RLock()
             if args.collectdata == 'True':
-                #Set Up datacapture
-                import collectdata #contains collectdata method
-
+                #Set Up collect_data
+                from CollectData import CollectData
+                self.collector = CollectData(args)
                 pass
             if args.selfdrive == 'True':
                 #set up selfdrive
                 pass
-
+            self.args = args
             pass
 
         # Command Methods
@@ -92,7 +122,12 @@ class ChaturDriver(Driver):
             return commands
 
         #Data Capture Methods
+        def collect_data(self):
+            self.collector.collect_data(self.getcommands)
+            pass
 
+        def exit_driver(self):
+            return sys.exit(0)
 
 
 
@@ -101,51 +136,32 @@ class ChaturDriver(Driver):
 
 
 def main():
+    params = load(open('driver.yaml').read(), Loader=Loader)
     parser = argparse.ArgumentParser(description='Driver for ChaturCar')
-    parser.add_argument('--hostname', default='0.0.0.0')
-    parser.add_argument('--port', default=5000)
-    parser.add_argument('--testing',default=False)
-    parser.add_argument('--selfdrive',default=False)
-    parser.add_argument('--collectdata',default=False)
-    parser.add_argument('--record_time'default=10)
-    parser.add_argument('--example', default='1')
-    parser.add_argument('--record_time', default=10)
-    parser.add_argument('--framerate',default=30)
+    parser.add_argument('--hostname', default=params['hostname'])
+    parser.add_argument('--port', default=params['port'])
+    parser.add_argument('--testing',default=params['testing'])
+    parser.add_argument('--selfdrive',default=params['selfdrive'])
+    parser.add_argument('--collectdata',default=params['collectdata'])
+    parser.add_argument('--record_time',default=params['record_time'])
+    parser.add_argument('--example', default=params['example'])
+    parser.add_argument('--framerate',default=params['framerate'])
     args = parser.parse_args()
+
+    car = ChaturCar()
+    car.test()
+
+
     # Cleanup done at exit
-'''
+
     @atexit.register
-    def cleanup_robot():
-        if args.testing != 'True':
-            print('EXITING')
-            PiOde.stop()
-            GPIO.cleanup()
+    def shutdownChaturCar():
+        print('EXITING')
+        car.stop()
+        pz.cleanup()
+        #server.shutdown()
         pass
-
-    if args.testing != 'True':
-        # Rpi Sepcific Commands - if not testing
-        import RPi.GPIO as GPIO
-        import sensors
-        import motors
-        import robots
-        params = load(open('params.yaml').read(), Loader=Loader)
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setwarnings(False)
-
-        StdByPin = params['StdByPin']  # this is the common pin
-        leftMotorPins = params['leftMotorPins'] # fill up with GPIO pins, PWMA, AIn1, AIn2
-        rightMotorPins = params['rightMotorPins'] # same as above
-        leftMotorPins.append(StdByPin)
-        rightMotorPins.append(StdByPin)
-
-        #set up motors and sensors
-        Motors = [motors.motor(leftMotorPins,'Left'),motors.motor(rightMotorPins,'Right')]
-        Sensors = [sensors.ultrasonic_sensor([params['trig'],params['echo_left']]), sensors.ultrasonic_sensor([params['trig'],params['echo_fwd']]), sensors.ultrasonic_sensor([params['trig'],params['echo_right']])]
-
-        #set up robot
-        PiOde = robots.RobotOne(Motors,Sensors)
-        #PiOde.test()
-
+''' Need to save space for Button Pins, Use Later
         #Buttons
         button_pin = params['button_pin']
         GPIO.setup(button_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
@@ -154,12 +170,9 @@ def main():
         GPIO.add_event_detect(button_pin, GPIO.RISING, bouncetime = 200)
         GPIO.add_event_callback(button_pin, PiOde.toggle_roaming)
         print('PiOde Set Up Complete')
-    else:
-        PiOde = None
+'''
 
-    # driver instance
-    d = Driver(PiOde,args)
-
+'''
     #start the threaded processes
     threading.Thread(target=d.sense,daemon=True).start()
 
