@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>ChaturCar Browser Control</h1>
+<h2>Drive Speed & Steer</h2>
+<p>Drag the sliders to Send</p>
+
+<div id="slidecontainer">
+  <p>Drive Speed: <span id="drive_speed_value"></span></p>
+  <input type="range" min="-1.00" max="1.00" value="0.00" step ="0.01" id="drive_speed" name="drive_speed">
+  <p>Steering Speed: <span id="steer_speed_value"></span></p>
+  <input type="range" min="-1.00" max="1.0" value="0.00" step ="0.01" id="steer_speed" name="steer_speed">
+</div>
+  <p></p>
+  <p></p>
+  <input type="button" value='STOP CAR' id="stop_button">
+  <p></p>
+  <p></p>
+  <input type="button" value='EXIT CAR' id="exit_button">
+
+<script>
+
+var drive_speed = document.getElementById("drive_speed");
+var steer_speed = document.getElementById("steer_speed");
+var drive_speed_output = document.getElementById("drive_speed_value");
+var steer_speed_output = document.getElementById("steer_speed_value");
+var stop_button = document.getElementById("stop_button");
+drive_speed_output.innerHTML = drive_speed.value;
+steer_speed_output.innerHTML = steer_speed.value;
+
+
+steer_speed.oninput = function() {
+  steer_speed_output.innerHTML = steer_speed.value;
+  var xhttp = new XMLHttpRequest();
+
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+    }
+  };
+
+  var url = "http://manishpi31.local:5000/recv_commands?drive_speed="+drive_speed.value+"&steer_speed="+steer_speed.value;
+  xhttp.open("GET", url, true);
+  xhttp.send();
+};
+steer_speed.oninput = function() {
+  steer_speed_output.innerHTML = steer_speed.value;
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+    }
+  };
+
+  var url = "http://manishpi31.local:5000/recv_commands?drive_speed="+drive_speed.value+"&steer_speed="+steer_speed.value;
+  xhttp.open("GET", url, true);
+  xhttp.send();
+};
+
+stop_button.onclick = function() {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+    }
+  };
+
+  var url = "http://manishpi31.local:5000/stop";
+  xhttp.open("GET", url, true);
+  xhttp.send();
+  location.href = url;
+};
+
+exit_button.onclick = function() {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+    }
+  };
+
+  var url = "http://manishpi31.local:5000/exit";
+  xhttp.open("GET", url, true);
+  xhttp.send();
+  location.href = url;
+};
+</script>
+
+</body>
+</html>

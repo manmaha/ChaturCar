@@ -21,6 +21,22 @@ import atexit
 from werkzeug.serving import make_server
 import pz
 
+class ServerThread(threading.Thread):
+'''
+Flask Server Thread designed for clean exit
+'''
+    def __init__(self, app, args):
+        threading.Thread.__init__(self)
+        self.srv = make_server(args.hostname, args.port, app)
+        self.ctx = app.app_context()
+        self.ctx.push()
+
+    def run(self):
+        self.srv.serve_forever()
+
+    def shutdown(self):
+        self.srv.shutdown()
+
 '''
 class Car(object):
     def __init__(self):
@@ -44,8 +60,9 @@ class ChaturCar(pz.Robot):
         super(ChaturCar,self).__init__()
         pass
     def drive(self,commands):
+        # this is specific to this piconzero and chassis set up
         steer_speed = commands[0]
-        drive_speed = commands[1]
+        drive_speed = -commands[1]
         self.set_motors(drive_speed,steer_speed)
         pass
     def forward(self,speed=1.0):
@@ -58,13 +75,13 @@ class ChaturCar(pz.Robot):
         self.drive([speed,0])
     def test(self):
         print('Testing Car')
-        print('Forward 3 seconds')
-        self.forward()
-        time.sleep(3)
+        print('Forward 1 seconds')
+        self.forward(0.25)
+        time.sleep(1)
         self.stop()
-        print('Backward 3 seconds')
-        self.reverse()
-        time.sleep(3)
+        print('Backward 1 seconds')
+        self.reverse(0.25)
+        time.sleep(1)
         self.stop()
         print('Test Steering')
         self.steer_left()
@@ -74,13 +91,11 @@ class ChaturCar(pz.Robot):
         self.stop()
         print('Test Circle')
         self.drive([0.50,0.50])
-        time.sleep(3)
+        time.sleep(1)
         self.stop()
         self.drive([-0.50,-0.50])
-        time.sleep(3)
+        time.sleep(1)
         self.stop()
-
-
 
 class Driver(object):
     def __init__(self,car,args):
@@ -94,11 +109,6 @@ class ChaturDriver(Driver):
             #Initialise Driver
             self.commands = [0,0] #initialise commands
             self._lock=threading.RLock()
-            if args.collectdata == 'True':
-                #Set Up collect_data
-                from CollectData import CollectData
-                self.collector = CollectData(args)
-                pass
             if args.selfdrive == 'True':
                 #set up selfdrive
                 pass
@@ -110,46 +120,65 @@ class ChaturDriver(Driver):
             '''
             sends commands to the car after picking them up from the right interface
             commands are [steer_speed, drive_speed]
+            NOT USED - DO WE NEED IT?
             '''
             commands = self.get_commands()
             self.car.drive(commands)
             pass
+
         def get_commands(self):
             '''
-            get commands from interface or from self Driver
+            get commanded speeds from pz.car
             commands are [steer_speed, drive_speed]
             '''
-            if self.args.selfdrive == 'True':
-                commands = self.generate_commands()
-            else:
-                commands = self.receive_commands()
+            with self._lock:
+                speed = self.car.get_speed()
+
+            commands = [speed[1],-speed[0]]
             return commands
-        def receive_commands(self):
-            commands = [0.0,0.0] #initialise Commands
-            '''
-            receive commands from transmitting interface
-            '''
-            return commands
+
         def generate_commands(self):
             commands = [0.0,0.0] #initialise Commands
             '''
             generate commands from self driving model
+            send them to Car
             '''
+            print('commands',commands)
+            with self._lock:
+                self.car.drive(commands)
             return commands
 
-        #Data Capture Methods
-        def collect_data(self):
-            self.collector.collect_data(self.getcommands)
-            pass
+        #Web Receiver methods
+        #@app.route("/")
+        def web_interface(self):
+            # html file is in ChaturCar.html
+            html = open("ChaturCar.html")
+            response = html.read().replace('\n', '')
+            html.close()
+            return response
 
+        #@app.route("/recv_commands")
+        def receive_commands(self):
+        '''
+        Receive Commands from interface
+        Send them to Car
+        '''
+            try:
+                drive_speed = float(request.args.get("drive_speed"))
+                steer_speed = float(request.args.get("steer_speed"))
+                commands = [steer_speed,drive_speed]
+            except:
+                return "Bad Input"
+                print('Bad speed input')
+            else:
+                print('commands',commands)
+                with self._lock:
+                    self.car.drive(commands)
+                return commands
+
+        #utility methods
         def exit_driver(self):
             return sys.exit(0)
-
-
-
-
-
-
 
 def main():
     params = load(open('driver.yaml').read(), Loader=Loader)
@@ -163,11 +192,6 @@ def main():
     parser.add_argument('--example', default=params['example'])
     parser.add_argument('--framerate',default=params['framerate'])
     args = parser.parse_args()
-
-    car = ChaturCar()
-    car.test()
-
-
     # Cleanup done at exit
 
     @atexit.register
@@ -175,34 +199,47 @@ def main():
         print('EXITING')
         car.stop()
         #car.cleanup()
-        #server.shutdown()
+        server.shutdown()
         pass
-''' Need to save space for Button Pins, Use Later
-        #Buttons
-        button_pin = params['button_pin']
-        GPIO.setup(button_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
-        #set up button handling
-        GPIO.add_event_detect(button_pin, GPIO.RISING, bouncetime = 200)
-        GPIO.add_event_callback(button_pin, PiOde.toggle_roaming)
-        print('PiOde Set Up Complete')
-'''
-
-'''
+    car = ChaturCar()
+    car.test()
+    driver =ChaturDriver(car,args)
+    
     #start the threaded processes
-    threading.Thread(target=d.sense,daemon=True).start()
-
-    #start the flask server
+    threads = list()
+    #start the flask server - this is the main thread
     app = Flask(__name__)
-    #app.add_url_rule('/','web_interface',d.web_interface)
-    #app.add_url_rule('/read_vel','read_vel',d.read_vel)
+    app.route("/")(driver.web_interface)
+    app.route("/recv_commands")(driver.receive_commands)
+    app.route("/stop")(car.stop)
+    app.route("/exit")(lambda:sys.exit(0))
+    server = ServerThread(app,args)
+    server.start()
+    threads.append(server)
 
-    app.route("/")(d.web_interface)
-    app.route("/read_vel")(d.read_vel)
-    app.route("/stop")(d.stop)
-    #app.route("/exit")(lambda:sys.exit(0))
+    #Now the daemon threads as required
+    if args.collectdata == 'True':
+        from CollectData import CollectData
+        collector = CollectData(args)
+        collect_data = threading.Thread(target=collector.collect_data, args=(driver.get_commands,),daemon=True)
+        collect_data.start()
+        threads.append(collect_data)
+    if args.selfdrive == 'True':
+        self_drive = threading.Thread(target=driver.generate_commands,daemon=True)
+        self_drive.start()
+        threads.append(self_drive)
 
-    app.run(host= args.hostname,port=args.port, debug=False)
+    #join all threads
+    for index, thread in enumerate(threads):
+        thread.join()
+
+    pass
+
+
+
+
+    #app.run(host= args.hostname,port=args.port, debug=False)
 '''
 if __name__=="__main__":
         main()
