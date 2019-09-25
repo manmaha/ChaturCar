@@ -1,0 +1,9 @@
+#Camera Parameters
+resolution: (640,480)
+rotation: 180
+iso: 200
+exposure_mode: 'off'
+awb_mode: 'off'
+#Data Collection parameters
+examples_dirname: 'Examples'
+self_drive_dirname: 'Test'

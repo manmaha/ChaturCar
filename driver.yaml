@@ -1,0 +1,18 @@
+#Driver Parameters
+
+record_time: 10
+framerate: 30
+hostname: '0.0.0.0'
+port: 5000
+testing: False
+test: False
+selfdrive: True
+collectdata: False
+example: '1'
+
+#Camera Parameters
+resolution: (640,480)
+rotation: 180
+iso: 200
+exposure_mode: 'off'
+awb_mode: 'off'
