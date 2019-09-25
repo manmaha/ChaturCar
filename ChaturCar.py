@@ -19,9 +19,9 @@ from flask import Flask
 from flask import request
 import atexit
 from werkzeug.serving import make_server
-import piconzero as pz
+import pz
 
-
+'''
 class Car(object):
     def __init__(self):
         pass
@@ -31,28 +31,30 @@ class Car(object):
     def stop(self):
         self.drive([0,0])
         pass
+'''
 
-class ChaturCar(Car):
-    # Special subclass of Car class with a steering motor and drive motor
-    # Also using PiconZero and camera
-    #Picon Motor A(0) set as steering motor, Motor B(1) set as driving motor
+class ChaturCar(pz.Robot):
+    '''Special subclass of pz.Robot class with a steering motor and drive motor
+    Also using PiconZero and camera
+    Picon Motor A(0) set as steering motor, Motor B(1) set as driving motor
+    using the pz robot class without the other features
+    Speeds are between -1 and +1
+    '''
     def __init__(self):
         super(ChaturCar,self).__init__()
-        pz.init()
         pass
     def drive(self,commands):
-        steer_command = commands[0]
-        drive_command = commands[1]
-        pz.setMotor(0,steer_command)
-        pz.setMotor(1,drive_command)
+        steer_speed = commands[0]
+        drive_speed = commands[1]
+        self.set_motors(drive_speed,steer_speed)
         pass
-    def forward(self,speed=100):
+    def forward(self,speed=1.0):
         self.drive([0,speed])
-    def reverse(self,speed=100):
+    def reverse(self,speed=1.0):
         self.drive([0,-speed])
-    def steer_left(self,speed=100):
+    def steer_left(self,speed=1.0):
         self.drive([-speed,0])
-    def steer_right(self,speed=100):
+    def steer_right(self,speed=1.0):
         self.drive([speed,0])
     def test(self):
         print('Testing Car')
@@ -71,9 +73,13 @@ class ChaturCar(Car):
         time.sleep(1)
         self.stop()
         print('Test Circle')
-        self.drive([50,50])
+        self.drive([0.50,0.50])
         time.sleep(3)
         self.stop()
+        self.drive([-0.50,-0.50])
+        time.sleep(3)
+        self.stop()
+
 
 
 class Driver(object):
@@ -101,24 +107,34 @@ class ChaturDriver(Driver):
 
         # Command Methods
         def send_commands(self):
-            #sends commands to the car after picking them up from the right interface
+            '''
+            sends commands to the car after picking them up from the right interface
+            commands are [steer_speed, drive_speed]
+            '''
             commands = self.get_commands()
             self.car.drive(commands)
             pass
         def get_commands(self):
-            # get commands from interface or from self Driver
-            if self.args.selfdrive = 'True':
+            '''
+            get commands from interface or from self Driver
+            commands are [steer_speed, drive_speed]
+            '''
+            if self.args.selfdrive == 'True':
                 commands = self.generate_commands()
             else:
                 commands = self.receive_commands()
             return commands
         def receive_commands(self):
             commands = [0.0,0.0] #initialise Commands
-            #receive commands from transmitting interface
+            '''
+            receive commands from transmitting interface
+            '''
             return commands
         def generate_commands(self):
             commands = [0.0,0.0] #initialise Commands
-            #generate commands from self driving model
+            '''
+            generate commands from self driving model
+            '''
             return commands
 
         #Data Capture Methods
@@ -158,7 +174,7 @@ def main():
     def shutdownChaturCar():
         print('EXITING')
         car.stop()
-        pz.cleanup()
+        #car.cleanup()
         #server.shutdown()
         pass
 ''' Need to save space for Button Pins, Use Later
