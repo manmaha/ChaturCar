@@ -20,6 +20,8 @@ from flask import request
 import atexit
 from werkzeug.serving import make_server
 import pz
+from ImageProc import ImageProc
+import Models
 
 class ServerThread(threading.Thread):
 '''
@@ -116,14 +118,13 @@ class ChaturDriver(Driver):
             pass
 
         # Command Methods
-        def send_commands(self):
+        def send_commands(self,commands):
             '''
-            sends commands to the car after picking them up from the right interface
+            sends commands to the car
             commands are [steer_speed, drive_speed]
-            NOT USED - DO WE NEED IT?
             '''
-            commands = self.get_commands()
-            self.car.drive(commands)
+            with self._lock:
+                self.car.drive(commands)
             pass
 
         def get_commands(self):
@@ -135,17 +136,6 @@ class ChaturDriver(Driver):
                 speed = self.car.get_speed()
 
             commands = [speed[1],-speed[0]]
-            return commands
-
-        def generate_commands(self):
-            commands = [0.0,0.0] #initialise Commands
-            '''
-            generate commands from self driving model
-            send them to Car
-            '''
-            print('commands',commands)
-            with self._lock:
-                self.car.drive(commands)
             return commands
 
         #Web Receiver methods
@@ -172,9 +162,23 @@ class ChaturDriver(Driver):
                 print('Bad speed input')
             else:
                 print('commands',commands)
-                with self._lock:
-                    self.car.drive(commands)
+                self.send_commands(commands)
                 return commands
+
+        # Self Driver
+        def self_driver(self,collector):
+            #Choose Model
+            model = Models.Naive_Model(self.args)
+        	Max_Frames = self.args.drive_time*self.args.framerate
+        	for frame_num in range(Max_Frames):
+                while frame_num >= collector.get_frame_num(): #new frame has not been posted
+                    pass
+                #new image seen
+                data = collector.get_image()
+                commands = model.generate_commands(data)
+                self.send_commands(commands)
+
+
 
         #utility methods
         def exit_driver(self):
@@ -189,11 +193,12 @@ def main():
     parser.add_argument('--selfdrive',default=params['selfdrive'])
     parser.add_argument('--collectdata',default=params['collectdata'])
     parser.add_argument('--record_time',default=params['record_time'])
+    parser.add_argument('--drive_time',default=params['drive_time'])
     parser.add_argument('--example', default=params['example'])
     parser.add_argument('--framerate',default=params['framerate'])
     args = parser.parse_args()
-    # Cleanup done at exit
 
+    # Cleanup done at exit
     @atexit.register
     def shutdownChaturCar():
         print('EXITING')
@@ -205,10 +210,16 @@ def main():
     car = ChaturCar()
     car.test()
     driver =ChaturDriver(car,args)
-    
+
+    if args.selfdrive == 'True' or args.collectdata == 'True':
+        collector = ImageProc(args)
+
     #start the threaded processes
     threads = list()
-    #start the flask server - this is the main thread
+    '''
+    Thread to receive commands goes here
+    '''
+    #start the flask server for reading commands - this is the main thread
     app = Flask(__name__)
     app.route("/")(driver.web_interface)
     app.route("/recv_commands")(driver.receive_commands)
@@ -218,15 +229,22 @@ def main():
     server.start()
     threads.append(server)
 
-    #Now the daemon threads as required
+    '''
+    Now the daemon threads as required
+    for collecting example data and self driving
+    '''
+    #collect data
     if args.collectdata == 'True':
-        from CollectData import CollectData
-        collector = CollectData(args)
         collect_data = threading.Thread(target=collector.collect_data, args=(driver.get_commands,),daemon=True)
         collect_data.start()
         threads.append(collect_data)
+    #self drive
     if args.selfdrive == 'True':
-        self_drive = threading.Thread(target=driver.generate_commands,daemon=True)
+        capture_image = threading.Thread(target=collector.capture_image,daemon=true)
+        capture_image.start()
+        threads.append(capture_image)
+
+        self_drive = threading.Thread(target=driver.self_drive,args=(collector,)daemon=true)
         self_drive.start()
         threads.append(self_drive)
 

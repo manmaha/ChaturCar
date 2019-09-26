@@ -1,5 +1,5 @@
 '''
-Class Files for CollectData Class
+Class Files for ImageProc Class
 Captures Images through Raspberry Pi camera
 Captures Command Signals
 Combines [Image, Command]
@@ -20,9 +20,8 @@ import argparse
 def get_command():
 	return np.random.randn(2)
 
-Class CollectData(object):
+Class ImageProc(object):
     def __init__(self,args):
-
         # intitalisse parameters
         params = load(open('camera.yaml').read(), Loader=Loader)
     	# initialize the camera and set output
@@ -31,21 +30,6 @@ Class CollectData(object):
     	camera.framerate = args.framerate
     	camera.rotation = params['rotation']
     	camera.iso = params['iso'] #800 for indoors, 200 outdoors
-
-        #create requisite Directory
-        if args.selfdrive == 'True'
-            dirname = params['self_drive_dirname']
-        else:
-            dirname = params['examples_dirname']
-        dirname += args.example
-    	try:
-    	  # Create target Directory
-    	  os.mkdir(dirName)
-    	  print("Directory " , dirName ,  " Created ")
-    	except FileExistsError:
-    	  print("Directory " , dirName ,  " already exists")
-
-
         # allow the camera to warmup
     	time.sleep(2)
         #Now Set Fixed Camera Parameters
@@ -59,11 +43,30 @@ Class CollectData(object):
 
         self.camera = camera
         self.args = args
+		self.image_array = PiRGBArray(camera, size=camera.resolution)
+		self._lock=threading.RLock()
+		self.frame_num = 0
         pass
 
 
     def collect_data(self,get_commands=get_command):
-    	rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
+		'''
+		collects example data and stores to file
+		'''
+        #create requisite Directory
+        if args.selfdrive == 'True'
+            dirname = params['self_drive_dirname']
+        else:
+            dirname = params['examples_dirname']
+        dirname += args.example
+    	try:
+    	  # Create target Directory
+    	  os.mkdir(dirName)
+    	  print("Directory " , dirName ,  " Created ")
+    	except FileExistsError:
+    	  print("Directory " , dirName ,  " already exists")
+
+		rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
     	Max_Frames = self.args.record_time*self.camera.framerate
     	frame_num = 0
 
@@ -81,6 +84,38 @@ Class CollectData(object):
     		if frame_num == Max_Frames:
     			break
         pass
+
+		def capture_image(self):
+			'''
+			capture frames one by one and store them
+			'''
+			rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
+	    	Max_Frames = self.args.drive_time*self.camera.framerate
+	    	frame_num = 0
+	    	for frame in self.camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+				with self._lock:
+					self.image_array = rawCapture
+					self.frame_num+=1
+				frame_num +=1
+	    		rawCapture.truncate(0)
+
+	    		if frame_num == Max_Frames:
+	    			break
+
+			pass
+
+		def get_frame_num(self):
+			with self._lock:
+				return self.frame_num
+
+		def get_image(self):
+			'''
+			get stored Images
+			'''
+			with self._lock:
+				return self.image_array.array
+			pass
+
 
 
 
