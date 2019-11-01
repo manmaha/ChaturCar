@@ -15,9 +15,6 @@
   <p></p>
   <p></p>
   <input type="button" value='STOP CAR' id="stop_button">
-  <p></p>
-  <p></p>
-  <input type="button" value='EXIT CAR' id="exit_button">
 
 <script>
 
@@ -43,8 +40,8 @@ steer_speed.oninput = function() {
   xhttp.open("GET", url, true);
   xhttp.send();
 };
-steer_speed.oninput = function() {
-  steer_speed_output.innerHTML = steer_speed.value;
+drive_speed.oninput = function() {
+  drive_speed_output.innerHTML = drive_speed.value;
   var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
@@ -69,18 +66,6 @@ stop_button.onclick = function() {
   location.href = url;
 };
 
-exit_button.onclick = function() {
-  var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-    }
-  };
-
-  var url = "http://manishpi31.local:5000/exit";
-  xhttp.open("GET", url, true);
-  xhttp.send();
-  location.href = url;
-};
 </script>
 
 </body>
