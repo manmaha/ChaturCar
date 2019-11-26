@@ -252,7 +252,7 @@ if __name__ == '__main__':
 	import sys
 	import time
 
-	print("Tesing picon Zero motor conotrller")
+	print("Tesing picon Zero motor controller")
 	print("Test options are: ")
 	print("1 - test Motor A")
 	print("2 - test Motor B")

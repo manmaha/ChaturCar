@@ -32,7 +32,7 @@ class ChaturCar(pz.Robot):
         # this is specific to this piconzero and chassis set up
         steer_speed = commands[0]
         drive_speed = commands[1]
-        self.set_motors(-steer_speed,-drive_speed)
+        self.set_motors(steer_speed,drive_speed)
         pass
     def forward(self,speed=1.0):
         self.drive([0,speed])
@@ -84,6 +84,8 @@ class ChaturDriver(Driver):
             self.args = args
             pass
         def stop(self):
+            self.send_commands([0, - self.get_commands()[1]])
+            time.sleep(0.25)
             self.car.stop()
             return self.web_interface()
         # Command Methods
@@ -104,7 +106,7 @@ class ChaturDriver(Driver):
             '''
             with self._lock:
                 speed = self.car.get_speed()
-            commands = [-speed[0],-speed[1]]
+            commands = [speed[0],speed[1]]
             return commands
 
         #Web Receiver methods

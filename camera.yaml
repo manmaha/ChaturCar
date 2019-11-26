@@ -1,5 +1,5 @@
 #Camera Parameters
-resolution: (640,480)
+resolution: [640,480]
 rotation: 180
 iso: 200
 exposure_mode: 'off'

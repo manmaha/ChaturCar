@@ -1,3 +1,9 @@
+#Car Parameters
+max_steer: 1.0
+max_drive: 0.45
+steer_step: 1.0
+drive_step: 0.15
+
 #Driver Parameters
 record_time: 10
 drive_time: 10

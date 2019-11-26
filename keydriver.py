@@ -8,16 +8,16 @@ Manish Mahajan
 25 September 2019
 '''
 
-import logging
-import time
+
+
 import argparse
 import signal
 import sys
 import threading
 from yaml import load, Loader
-from flask import Flask, request
+
 import atexit
-import pz
+
 import chaturcar
 import imageproc
 import models
@@ -27,9 +27,9 @@ import termios
 
 class KeyboardThread(threading.Thread):
 #Keyboard Thread
-    def __init__(self, action):
+    def __init__(self, driver):
         threading.Thread.__init__(self)
-        self.action = action
+        self.driver = driver
 
     def readchar(self):
         fd = sys.stdin.fileno()
@@ -57,26 +57,29 @@ class KeyboardThread(threading.Thread):
     def run(self):
         steer_speed = 0.0
         drive_speed = 0.0
-        steer_step = 0.30
-        drive_step = 0.05
+        steer_step = 0.5
+        drive_step = 0.15
+        max_steer =  1.0
+        max_drive = 0.45
         try:
             while True:
                 keyp = self.readkey()
                 if keyp == 'w' or ord(keyp) == 16:
-                    drive_speed =min(1.0, drive_speed+drive_step)
+                    drive_speed =min(max_drive, drive_speed+drive_step)
                 elif keyp == 'z' or ord(keyp) == 17:
-                    drive_speed =max(-1.0, drive_speed-drive_step)
+                    drive_speed =max(-max_drive, drive_speed-drive_step)
                 elif keyp == 's' or ord(keyp) == 18 or keyp == '.' or keyp == '>':
-                    steer_speed =min(1.0, steer_speed+steer_step)
+                    steer_speed =min(max_steer, steer_speed+steer_step)
                 elif keyp == 'a' or ord(keyp) == 19 or keyp == ',' or keyp == '<':
-                    steer_speed= max(-1.0, steer_speed-steer_step)
+                    steer_speed= max(-max_steer, steer_speed-steer_step)
                 elif keyp == ' ':
+                    self.driver.stop()
                     steer_speed = 0.0
                     drive_speed = 0.0
                 elif ord(keyp) == 3:
                     break
                 commands = [steer_speed,drive_speed]
-                self.action(commands)
+                self.driver.send_commands(commands)
 
         except KeyboardInterrupt:
             print()
@@ -126,7 +129,7 @@ def main():
     Thread to receive commands goes here
     '''
     #start the keyboard server for reading commands - this is the main thread
-    keyboard_read = KeyboardThread(driver.send_commands)
+    keyboard_read = KeyboardThread(driver)
     keyboard_read.start()
     threads.append(keyboard_read)
 
