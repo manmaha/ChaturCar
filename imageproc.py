@@ -3,7 +3,7 @@
 Class Files for ImageProc Class
 Captures Images through Raspberry Pi camera
 Captures Command Signals
-Combines [Image, Command]
+#Combines [Image, Command]
 pickles them and stores to a folder with name Examples%d or Test%d (input string)
 Manish Mahajan
 25 Sep 2019
@@ -46,7 +46,7 @@ class ImageProc(object):
 		self.frame_num = 0
 		pass
 
-	def collect_data(self,get_commands=get_command):
+	def collect_data_old(self,get_commands=get_command):
 		'''
 		collects example data and stores to file
 		'''
@@ -84,40 +84,91 @@ class ImageProc(object):
 		print('Finished Collecting Data')
 		pass
 
-	def capture_image(self): #is this used at all?
+	def collect_data(self,get_commands=get_command):
 		'''
-		capture frames one by one and store them
+		collects example data and stores to file in separate directories
 		'''
+		#create requisite Directory
+		if self.args.selfdrive == 'True':
+			dirName = self.params['self_drive_dirname']
+		else:
+			dirName = self.params['examples_dirname']
+		dirName += self.args.example
+
+		# Create target Directories
+
+		try:
+		  os.mkdir(dirName)
+		  print("Directory " , dirName ,  " Created ")
+		except FileExistsError:
+		  print("Directory " , dirName ,  " already exists")
+
+		try:
+		  os.mkdir(dirname+'/X')
+		  os.mkdir(dirname+'/Y')
+	  	except FileExistsError:
+		  print("Directory " , dirName+'/X' ,  " already exists")
+
 		rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
-		Max_Frames = self.args.record_time*self.args.framerate
+		Max_Frames = int(self.args.record_time)*int(self.args.framerate)
 		print('Max Frames', Max_Frames)
 		frame_num = 0
 		for frame in self.camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
-			with self._lock:
-				self.image_array = rawCapture
-				self.frame_num+=1
-			print('Captured Frame',frame_num)
-			frame_num +=1
+			image = rawCapture.array
+			commands = get_commands()
+			#combine with command data into example
+			#data = [image, commands]
+			#write to Files
+			img_filename = './'+dirName+'/X/'+'data%04d'%frame_num
+			cmd_filename = './'+dirName+'/Y/'+'cmd%04d'%frame_num
+			np.save(img_filename,image,allow_pickle=True)
+			np.save(cmd_filename,commands,allow_pickle=True)
+				# clear the stream in preparation for the next frame
 			rawCapture.truncate(0)
+			print('stored frame_num', frame_num)
+			frame_num+=1
 			if frame_num == Max_Frames:
 				break
-
-	def get_frame_num(self):
-		with self._lock:
-			return self.frame_num
-
-	def set_frame_num(self,frame_num):
-		with self._lock:
-			self.frame_num=frame_num
+		print('Finished Collecting Data')
 		pass
 
 
-	def get_image(self):
-		'''
-		get stored Images
-		'''
-		with self._lock:
-			return self.image_array.array
+
+
+		def capture_image(self): #is this used at all?
+			'''
+			capture frames one by one and store them
+			'''
+			rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
+			Max_Frames = self.args.record_time*self.args.framerate
+			print('Max Frames', Max_Frames)
+			frame_num = 0
+			for frame in self.camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+				with self._lock:
+					self.image_array = rawCapture
+					self.frame_num+=1
+				print('Captured Frame',frame_num)
+				frame_num +=1
+				rawCapture.truncate(0)
+				if frame_num == Max_Frames:
+					break
+
+		def get_frame_num(self):
+			with self._lock:
+				return self.frame_num
+
+		def set_frame_num(self,frame_num):
+			with self._lock:
+				self.frame_num=frame_num
+			pass
+
+
+		def get_image(self):
+			'''
+			get stored Images
+			'''
+			with self._lock:
+				return self.image_array.array
 
 
 def main():
@@ -128,7 +179,7 @@ def main():
     parser.add_argument('--selfdrive',default=False)
     parser.add_argument('--collectdata',default=False)
     args = parser.parse_args()
-    c = CollectData(args)
+    c = ImageProc(args)
     c.collect_data()
 if __name__=="__main__":
         main()
