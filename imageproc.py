@@ -22,6 +22,10 @@ import threading
 def get_command():
 	return np.random.randn(2)
 
+def get_class():
+	return 1
+
+
 class ImageProc(object):
 	def __init__(self,args):
 		# intitalise parameters
@@ -46,7 +50,7 @@ class ImageProc(object):
 		self.frame_num = 0
 		pass
 
-	def collect_data_old(self,get_commands=get_command):
+	def collect_data_old1(self,get_commands=get_command):
 		'''
 		collects example data and stores to file
 		'''
@@ -84,7 +88,7 @@ class ImageProc(object):
 		print('Finished Collecting Data')
 		pass
 
-	def collect_data(self,get_commands=get_command):
+	def collect_data_old2(self,get_commands=get_command):
 		'''
 		collects example data and stores to file in separate directories
 		'''
@@ -132,6 +136,52 @@ class ImageProc(object):
 		print('Finished Collecting Data')
 		pass
 
+	def collect_data(self,get_class=get_class):
+		'''
+		collects example data and stores to file in separate directories
+		Classifies the drive/steer data into 9 classes and stores them in relevant Directories
+		'''
+		#create requisite Directory
+		if self.args.selfdrive == 'True':
+			dirName = self.params['self_drive_dirname']
+		else:
+			dirName = self.params['examples_dirname']
+		dirName += self.args.example
+
+		# Create target Directories
+
+		try:
+		  os.mkdir(dirName)
+		  print("Directory " , dirName ,  " Created ")
+		except FileExistsError:
+		  print("Directory " , dirName ,  " already exists")
+
+		try:
+		  # now make the different class directories
+		  for class_dirname in range(1,10):
+		  	os.mkdir(dirname+'/X%d'%class_dirname)
+	  	except FileExistsError:
+		  print("Directory " , dirName+'/1' ,  " already exists")
+
+		rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
+		Max_Frames = int(self.args.record_time)*int(self.args.framerate)
+		print('Max Frames', Max_Frames)
+		frame_num = 0
+		for frame in self.camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+			image = rawCapture.array
+			classification = get_class()
+
+			#write to File
+			img_filename = './'+dirName+'/%d/'%classification+'data%04d'%frame_num
+			np.save(img_filename,image,allow_pickle=True)
+				# clear the stream in preparation for the next frame
+			rawCapture.truncate(0)
+			print('stored frame_num', frame_num)
+			frame_num+=1
+			if frame_num == Max_Frames:
+				break
+		print('Finished Collecting Data')
+		pass
 
 
 

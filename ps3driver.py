@@ -177,7 +177,7 @@ def main():
     '''
     #collect data
     if args.collectdata == 'True':
-        collect_data = threading.Thread(target=collector.collect_data, args=(driver.get_commands,),daemon=True)
+        collect_data = threading.Thread(target=collector.collect_data, args=(driver.get_class_from_commands,),daemon=True)
         collect_data.start()
         threads.append(collect_data)
     #self drive

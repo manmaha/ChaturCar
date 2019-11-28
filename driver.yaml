@@ -3,6 +3,8 @@ max_steer: 1.0
 max_drive: 0.45
 steer_step: 1.0
 drive_step: 0.15
+avg_drive = 0.3
+avg_steer = 0.8
 
 #Driver Parameters
 record_time: 10

@@ -81,8 +81,15 @@ class ChaturDriver(Driver):
             if args.selfdrive == 'True':
                 #set up selfdrive
                 pass
+
+            avg_steer, avg_drive = self.args.avg_steer, self.args.avg_drive
+            self.classes = {1:[0,avg_drive],2:[-avg_steer,avg_drive],\
+            3:[avg_steer,av_drive],4:[0,0],5:[-avg_steer,0],6:[avg_steer,0],\
+            7:[0,-avg_drive],8:[-avg_steer,-avg_drive],9:[avg_steer,-avg_drive]}
+
             self.args = args
             pass
+
         def stop(self):
             self.send_commands([0, - self.get_commands()[1]])
             time.sleep(0.25)
@@ -108,6 +115,66 @@ class ChaturDriver(Driver):
                 speed = self.car.get_speed()
             commands = [speed[0],speed[1]]
             return commands
+
+        def get_class_from_commands(self,commands):
+            '''
+            Define Classification of Commands to be used in Learning Model
+            		Drive +1 Steer 0 : Class 1
+            		Drive +1 Steer -1 : Class 2
+            		Drive +1 Steer +1 : Class 3
+            		Drive 0 Steer 0 : Class 4
+            		Drive 0 Steer -1 : Class 5
+            		Drive 0 Steer +1 : Class 6
+            		Drive -1 Steer 0 : Class 7
+            		Drive -1 Steer -1 : Class 8
+            		Drive -1 Steer +1 : Class 9
+            '''
+            sensitivity = 0.15
+            drive_value, steer_value = commands
+            # find +1,-1,0 Classification
+            if drive_value > sensitivity:
+                drive = 1
+            elif drive_value > -sensitivity:
+                drive = 0
+            else:
+                drive = -1
+
+            if steer_value > sensitivity:
+                steer = 1
+            elif steer_value > -sensitivity:
+                steer = 0
+            else:
+                steer = -1
+            # Now classify
+
+            if drive == 1:
+                if steer == 0:
+                    return 1
+                elif steer == -1:
+                    return 2
+                else:
+                    return 3
+
+            elif drive == 0:
+                if steer == 0:
+                    return 4
+                elif steer == -1:
+                    return 5
+                else:
+                    return 6
+
+            else:
+                if steer == 0:
+                    return 7
+                elif steer == -1:
+                    return 8
+                else:
+                    return 9
+
+
+
+        def get_commands_from_class(self,classification):
+            return self.classes.get(classification)
 
         #Web Receiver methods
         #@app.route("/")
@@ -145,8 +212,8 @@ class ChaturDriver(Driver):
                     pass
                 #new image seen
                 data = collector.get_image()
-                commands = model.generate_commands(data)
-                self.send_commands(commands)
+                classification = model.generate_class(data)
+                self.send_commands(self.get_commands_from_class(classification))
 
 
 
@@ -166,6 +233,8 @@ def main():
     parser.add_argument('--drive_time',default=params['drive_time'])
     parser.add_argument('--example', default=params['example'])
     parser.add_argument('--framerate',default=params['framerate'])
+    parser.add_argument('--avg_steer',default=params['avg_steer'])
+    parser.add_argument('--avg_drive',default=params['avg_drive'])
     args = parser.parse_args()
 
     # Cleanup done at exit
