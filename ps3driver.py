@@ -19,6 +19,7 @@ import imageproc
 import models
 import sys
 import evdev
+import ps3
 
 ## Some helpers ##
 def scale(val, src, dst):
@@ -43,20 +44,11 @@ def clamp(value, floor=-100, ceil=100):
     return max(min(value, ceil), floor)
 
 class PS3Thread(threading.Thread):
-#Keyboard Thread
-    def __init__(self, driver):
+#PS3 Thread
+    def __init__(self, driver,joystick):
         threading.Thread.__init__(self)
         self.driver = driver
-        print("Finding PS3 controller...")
-        devices = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
-        for device in devices:
-            #print(device.name)
-            if device.name == 'PLAYSTATION(R)3 Controller':
-                self.joystick = evdev.InputDevice(device.fn)
-                print(device.name, 'found')
-
-
-
+        self.joystick = joystick
 
     def run(self):
         steer_speed = 0.0
@@ -163,28 +155,31 @@ def main():
     #car.test()
     if args.selfdrive == 'True' or args.collectdata == 'True':
         collector = imageproc.ImageProc(args)
+    joystick = ps3.PS3JoyStick().joystick
+    if joystick : #joystick found
+      #start the threaded processes
+      threads = list()
+      '''
+      Thread to receive commands goes here
+      '''
+      #start the PS3 Driver for reading commands - this is the main thread
 
-    #start the threaded processes
-    threads = list()
-    '''
-    Thread to receive commands goes here
-    '''
-    #start the keyboard server for reading commands - this is the main thread
-    ps3_read = PS3Thread(driver)
-    ps3_read.start()
-    threads.append(ps3_read)
+      ps3_read = PS3Thread(driver,joystick)
+      ps3_read.daemon = True
+      ps3_read.start()
+      threads.append(ps3_read)
 
-    '''
-    Now the daemon threads as required
-    for collecting example data and self driving
-    '''
-    #collect data
-    if args.collectdata == 'True':
-        collect_data = threading.Thread(target=collector.collect_data, args=(driver.get_class_from_commands,),daemon=True)
+      '''
+      Now the daemon threads as required
+      for collecting example data and self driving
+      '''
+      #collect data
+      if args.collectdata == 'True':
+        collect_data = threading.Thread(target=collector.collect_data, args=(driver.get_class,),daemon=False)
         collect_data.start()
         threads.append(collect_data)
-    #self drive
-    if args.selfdrive == 'True':
+      #self drive
+      if args.selfdrive == 'True':
         capture_image = threading.Thread(target=collector.capture_image,daemon=True)
         capture_image.start()
         threads.append(capture_image)
@@ -192,9 +187,9 @@ def main():
         self_drive.start()
         threads.append(self_drive)
 
-    #join all threads
-    for index, thread in enumerate(threads):
-        thread.join()
+      #join all threads
+#      for index, thread in enumerate(threads):
+#          thread.join()
 
     pass
 

@@ -116,7 +116,7 @@ class ChaturDriver(Driver):
             commands = [speed[0],speed[1]]
             return commands
 
-        def get_class_from_commands(self,commands):
+        def get_class(self):
             '''
             Define Classification of Commands to be used in Learning Model
             		Drive +1 Steer 0 : Class 1
@@ -130,7 +130,7 @@ class ChaturDriver(Driver):
             		Drive -1 Steer +1 : Class 9
             '''
             sensitivity = 0.15
-            drive_value, steer_value = commands
+            drive_value, steer_value = self.get_commands()
             # find +1,-1,0 Classification
             if drive_value > sensitivity:
                 drive = 1
