@@ -155,19 +155,17 @@ class ImageProc(object):
 		  os.mkdir(dirName)
 		  print("Directory " , dirName ,  " Created ")
 		except FileExistsError:
-		  	if os.path.exists(dirName):
-				os.system('cd '+dirName)
-				os.system('rm -r *')
+			if os.path.exists(dirName):
 				print("Directory " , dirName ,  " already exists")
 			else:
 				print('Error in creating Directory')
-
-		try:
-		  # now make the different class directories
-		  for class_dirname in range(1,10):
-		  	os.mkdir(dirName+'/%d'%class_dirname)
-		except FileExistsError:
-		  print("Directory " , dirName+'/1' ,  " already exists")
+		# now make the different class directories 
+		for class_dirname in range(1,10):
+			try:
+		  		os.mkdir(dirName+'/%d'%class_dirname)
+			except FileExistsError:
+				os.system('rm -r '+dirName+'/%d'%class_dirname+'/*')
+				print("Directory " , dirName+'/1' ,  " already exists: cleaned existing data")
 
 		rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
 		Max_Frames = int(self.args.record_time)*int(self.args.framerate)
