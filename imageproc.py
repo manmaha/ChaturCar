@@ -87,11 +87,11 @@ class ImageProc(object):
 				break
 		print('Finished Collecting Data')
 		pass
-
+	'''
 	def collect_data_old2(self,get_commands=get_command):
-		'''
-		collects example data and stores to file in separate directories
-		'''
+
+		#collects example data and stores to file in separate directories
+
 		#create requisite Directory
 		if self.args.selfdrive == 'True':
 			dirName = self.params['self_drive_dirname']
@@ -135,6 +135,7 @@ class ImageProc(object):
 				break
 		print('Finished Collecting Data')
 		pass
+	'''
 
 	def collect_data(self,get_class=get_class):
 		'''
@@ -154,13 +155,18 @@ class ImageProc(object):
 		  os.mkdir(dirName)
 		  print("Directory " , dirName ,  " Created ")
 		except FileExistsError:
-		  print("Directory " , dirName ,  " already exists")
+		  	if os.path.exists(dirName):
+				os.system('cd '+dirName)
+				os.system('rm -r *')
+				print("Directory " , dirName ,  " already exists")
+			else:
+				print('Error in creating Directory')
 
 		try:
 		  # now make the different class directories
 		  for class_dirname in range(1,10):
-		  	os.mkdir(dirname+'/X%d'%class_dirname)
-	  	except FileExistsError:
+		  	os.mkdir(dirName+'/%d'%class_dirname)
+		except FileExistsError:
 		  print("Directory " , dirName+'/1' ,  " already exists")
 
 		rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
