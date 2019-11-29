@@ -84,7 +84,7 @@ class ChaturDriver(Driver):
 
             avg_steer, avg_drive = self.args.avg_steer, self.args.avg_drive
             self.classes = {1:[0,avg_drive],2:[-avg_steer,avg_drive],\
-            3:[avg_steer,av_drive],4:[0,0],5:[-avg_steer,0],6:[avg_steer,0],\
+            3:[avg_steer,avg_drive],4:[0,0],5:[-avg_steer,0],6:[avg_steer,0],\
             7:[0,-avg_drive],8:[-avg_steer,-avg_drive],9:[avg_steer,-avg_drive]}
 
             self.args = args

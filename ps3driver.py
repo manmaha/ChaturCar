@@ -145,6 +145,9 @@ def main():
     parser.add_argument('--drive_time',default=params['drive_time'])
     parser.add_argument('--example', default=params['example'])
     parser.add_argument('--framerate',default=params['framerate'])
+    parser.add_argument('--avg_drive',default=params['avg_drive'])
+    parser.add_argument('--avg_steer',default=params['avg_steer'])
+
     args = parser.parse_args()
 
     # Cleanup done at exit
