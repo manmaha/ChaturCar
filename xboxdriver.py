@@ -19,7 +19,7 @@ import imageproc
 import models
 import sys
 import evdev
-import ps3
+import joystick
 
 ## Some helpers ##
 def scale(val, src, dst):
@@ -67,22 +67,22 @@ class PS3Thread(threading.Thread):
                     if event.type == 3:
                         if event.code == 1:         #Y axis on left stick
                             #print(event.value)
-                            change = -scale(event.value,(0,255),(-max_drive,max_drive)) - drive_speed
+                            change = -scale(event.value,(0,65535),(-max_drive,max_drive)) - drive_speed
                             if abs(change)>drive_step:
                                 drive_speed = clamp(drive_speed + change,-max_drive,max_drive)
                                 changed = True
                             #print('drive_speed: ',drive_speed)
-                            #peculiarity in the way PS3 controller works, inverting Y axis
-                        if event.code == 3:         #X axis on right stick
+                            #peculiarity in the way XBox controller works, inverting Y axis
+                        if event.code == 2:         #X axis on right stick
                             #print(event.value)
                             #steer_speed = scale(event.value,(0,255),(-max_steer,max_steer))
-                            change = scale(event.value,(0,255),(-max_steer,max_steer))-steer_speed
+                            change = scale(event.value,(0,65535),(-max_steer,max_steer))-steer_speed
                             if abs(change)>steer_step:
                                 steer_speed = clamp(steer_speed + change,-max_steer,max_steer)
                                 changed = True
                             #print('steer_speed: ',steer_speed)
-                    if event.type == 1  and event.value == 1 and event.code in [304, 317, 318]:
-                        print("X button is pressed. Stopping.")
+                    if event.type == 1  and event.value == 1 and event.code in [310, 311]:
+                        #print("X button is pressed. Stopping.")
                         self.driver.stop()
                         steer_speed = 0.0
                         drive_speed = 0.0
@@ -103,7 +103,7 @@ class PS3Thread(threading.Thread):
 
                         '''
                     if event.type == 1  and event.value == 1 and event.code == 307:
-                            print("Triangle button is pressed. Exiting.")
+                            print("X button is pressed. Exiting.")
                             self.driver.stop()
                             break
                     #print(steer_speed,drive_speed)
@@ -156,7 +156,7 @@ def main():
     #car.test()
     if args.selfdrive == 'True' or args.collectdata == 'True':
         collector = imageproc.ImageProc(args)
-    joystick = ps3.PS3JoyStick().joystick
+    joystick = joystick.XBoxJoyStick().joystick
     if joystick : #joystick found
       #start the threaded processes
       threads = list()

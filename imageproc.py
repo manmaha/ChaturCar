@@ -65,7 +65,7 @@ class ImageProc(object):
 		# Create target Directories
 		for class_dirname in range(1,8):
 			try:
-		  		os.makedirs(os.path.join(dirName,str(class_dirname))
+		  		os.makedirs(os.path.join(dirName,str(class_dirname)))
 			except FileExistsError:
 				print("Directory already exists")
 
@@ -75,24 +75,24 @@ class ImageProc(object):
 			labels=np.zeros(Max_Frames)
 		print('Max Frames', Max_Frames)
 		frame_num = 0
-		for frame in self.camera.capture_continuous(rawCapture, format="jpeg", use_video_port=True):
+		for frame in self.camera.capture_continuous(rawCapture, format="bgr" , use_video_port=True):
 			image = rawCapture.array
-			if self.args.label == True:
-				img_filename = os.path.join(class_dirname,'data{0:02d}_{0:04d}'.format(self.args.example,get_frame_num))
+			if self.args.labels == 'True':
+				img_filename = os.path.join(dirName,'data{0}_{1:04d}'.format(self.args.example,frame_num))
 				labels[frame_num]=get_class()
 			else:
-				class_dirname = os.path.join(dirname,get_class())
-				img_filename = os.path.join(class_dirname,'data{0:02d}_{0:04d}'.format(self.args.example,get_frame_num))
+				class_dirname = os.path.join(dirName,str(get_class()))
+				img_filename = os.path.join(class_dirname,'data{0}_{1:04d}'.format(self.args.example,frame_num))
 			#write to File
 			np.save(img_filename,image,allow_pickle=True)
 			# clear the stream in preparation for the next frame
 			rawCapture.truncate(0)
-			print('stored frame_num', frame_num)
+			print('Class Num', get_class(), 'Frame ',frame_num)
 			frame_num+=1
 			if frame_num == Max_Frames:
 				break
 		if self.args.labels == 'True':
-			np.save(os.path.join(dirname,'{0:02d}'.format(self.args.example)),\
+			np.save(os.path.join(dirName,self.args.example),\
 			labels,allow_pickle=True)
 		print('Finished Collecting Data')
 		pass
@@ -117,15 +117,15 @@ class ImageProc(object):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Capture Video and Content Frames')
-    parser.add_argument('--example', default='1')
-    parser.add_argument('--record_time', default=10)
-    parser.add_argument('--framerate',default=30)
-    parser.add_argument('--selfdrive',default=False)
-    parser.add_argument('--collectdata',default=False)
+	parser = argparse.ArgumentParser(description='Capture Video and Content Frames')
+	parser.add_argument('--example', default='1')
+	parser.add_argument('--record_time', default=10)
+	parser.add_argument('--framerate',default=30)
+	parser.add_argument('--selfdrive',default=False)
+	parser.add_argument('--collectdata',default=False)
 	parser.add_argument('--labels', default=False)
-    args = parser.parse_args()
-    c = ImageProc(args)
-    c.collect_data()
+	args = parser.parse_args()
+	c = ImageProc(args)
+	c.collect_data()
 if __name__=="__main__":
         main()

@@ -236,7 +236,7 @@ def main():
     parser.add_argument('--framerate',default=params['framerate'])
     parser.add_argument('--avg_steer',default=params['avg_steer'])
     parser.add_argument('--avg_drive',default=params['avg_drive'])
-    parser.add_argument('--labels', defalut=params['labels'])
+    parser.add_argument('--labels', default=params['labels'])
     args = parser.parse_args()
 
     # Cleanup done at exit
