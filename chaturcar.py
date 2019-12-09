@@ -84,8 +84,8 @@ class ChaturDriver(Driver):
 
             avg_steer, avg_drive = self.args.avg_steer, self.args.avg_drive
             self.classes = {1:[0,avg_drive],2:[-avg_steer,avg_drive],\
-            3:[avg_steer,avg_drive],4:[0,0],5:[-avg_steer,0],6:[avg_steer,0],\
-            7:[0,-avg_drive],8:[-avg_steer,-avg_drive],9:[avg_steer,-avg_drive]}
+            3:[avg_steer,avg_drive],7:[0,0],\
+            4:[0,-avg_drive],5:[-avg_steer,-avg_drive],6:[avg_steer,-avg_drive]}
 
             self.args = args
             pass
@@ -122,12 +122,10 @@ class ChaturDriver(Driver):
             		Drive +1 Steer 0 : Class 1
             		Drive +1 Steer -1 : Class 2
             		Drive +1 Steer +1 : Class 3
-            		Drive 0 Steer 0 : Class 4
-            		Drive 0 Steer -1 : Class 5
-            		Drive 0 Steer +1 : Class 6
-            		Drive -1 Steer 0 : Class 7
-            		Drive -1 Steer -1 : Class 8
-            		Drive -1 Steer +1 : Class 9
+            		Drive -1 Steer 0 : Class 4
+            		Drive -1 Steer -1 : Class 5
+            		Drive -1 Steer +1 : Class 6
+            		Drive 0 : Class 7
             '''
             sensitivity = 0.15
             drive_value, steer_value = self.get_commands()
@@ -136,6 +134,7 @@ class ChaturDriver(Driver):
                 drive = 1
             elif drive_value > -sensitivity:
                 drive = 0
+                return 7
             else:
                 drive = -1
 
@@ -155,7 +154,7 @@ class ChaturDriver(Driver):
                 else:
                     return 3
 
-            elif drive == 0:
+            elif drive == -1:
                 if steer == 0:
                     return 4
                 elif steer == -1:
@@ -164,13 +163,15 @@ class ChaturDriver(Driver):
                     return 6
 
             else:
+                return 7
+                '''
                 if steer == 0:
                     return 7
                 elif steer == -1:
                     return 8
                 else:
                     return 9
-
+                '''
 
 
         def get_commands_from_class(self,classification):
@@ -235,6 +236,7 @@ def main():
     parser.add_argument('--framerate',default=params['framerate'])
     parser.add_argument('--avg_steer',default=params['avg_steer'])
     parser.add_argument('--avg_drive',default=params['avg_drive'])
+    parser.add_argument('--labels', defalut=params['labels'])
     args = parser.parse_args()
 
     # Cleanup done at exit

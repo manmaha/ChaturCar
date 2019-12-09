@@ -5,5 +5,5 @@ iso: 200
 exposure_mode: 'off'
 awb_mode: 'off'
 #Data Collection parameters
-examples_dirname: 'Examples'
+training_dirname: 'Train'
 self_drive_dirname: 'Test'

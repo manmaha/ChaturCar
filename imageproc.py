@@ -3,16 +3,17 @@
 Class Files for ImageProc Class
 Captures Images through Raspberry Pi camera
 Captures Command Signals
-#Combines [Image, Command]
-pickles them and stores to a folder with name Examples%d or Test%d (input string)
+Classifies Images in Classes 1-7
+Stores Images in Train/1-7 directories
 Manish Mahajan
-25 Sep 2019
+9 Dec 2019
 '''
 # import the necessary packages
 from yaml import load, Loader
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 import os
+import io
 import time
 import numpy as np
 import argparse
@@ -50,165 +51,52 @@ class ImageProc(object):
 		self.frame_num = 0
 		pass
 
-	def collect_data_old1(self,get_commands=get_command):
-		'''
-		collects example data and stores to file
-		'''
-        	#create requisite Directory
-		if self.args.selfdrive == 'True':
-			dirName = self.params['self_drive_dirname']
-		else:
-			dirName = self.params['examples_dirname']
-		dirName += self.args.example
-
-		try:
-    	  	# Create target Directory
-		  os.mkdir(dirName)
-		  print("Directory " , dirName ,  " Created ")
-		except FileExistsError:
-		  print("Directory " , dirName ,  " already exists")
-		rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
-		Max_Frames = int(self.args.record_time)*int(self.args.framerate)
-		print('Max Frames', Max_Frames)
-		frame_num = 0
-		for frame in self.camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
-			image = rawCapture.array
-			commands = get_commands()
-    			#combine with command data into example
-			data = [image, commands]
-    			#write to File
-			filename = './'+dirName+'/'+'data%04d'%frame_num
-			np.save(filename,data,allow_pickle=True)
-    			# clear the stream in preparation for the next frame
-			rawCapture.truncate(0)
-			print('stored frame_num', frame_num)
-			frame_num+=1
-			if frame_num == Max_Frames:
-				break
-		print('Finished Collecting Data')
-		pass
-	'''
-	def collect_data_old2(self,get_commands=get_command):
-
-		#collects example data and stores to file in separate directories
-
-		#create requisite Directory
-		if self.args.selfdrive == 'True':
-			dirName = self.params['self_drive_dirname']
-		else:
-			dirName = self.params['examples_dirname']
-		dirName += self.args.example
-
-		# Create target Directories
-
-		try:
-		  os.mkdir(dirName)
-		  print("Directory " , dirName ,  " Created ")
-		except FileExistsError:
-		  print("Directory " , dirName ,  " already exists")
-
-		try:
-		  os.mkdir(dirname+'/X')
-		  os.mkdir(dirname+'/Y')
-	  	except FileExistsError:
-		  print("Directory " , dirName+'/X' ,  " already exists")
-
-		rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
-		Max_Frames = int(self.args.record_time)*int(self.args.framerate)
-		print('Max Frames', Max_Frames)
-		frame_num = 0
-		for frame in self.camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
-			image = rawCapture.array
-			commands = get_commands()
-			#combine with command data into example
-			#data = [image, commands]
-			#write to Files
-			img_filename = './'+dirName+'/X/'+'data%04d'%frame_num
-			cmd_filename = './'+dirName+'/Y/'+'cmd%04d'%frame_num
-			np.save(img_filename,image,allow_pickle=True)
-			np.save(cmd_filename,commands,allow_pickle=True)
-				# clear the stream in preparation for the next frame
-			rawCapture.truncate(0)
-			print('stored frame_num', frame_num)
-			frame_num+=1
-			if frame_num == Max_Frames:
-				break
-		print('Finished Collecting Data')
-		pass
-	'''
-
 	def collect_data(self,get_class=get_class):
 		'''
 		collects example data and stores to file in separate directories
-		Classifies the drive/steer data into 9 classes and stores them in relevant Directories
+		Classifies the drive/steer data into 7 classes and stores them in relevant Directories
 		'''
+
 		#create requisite Directory
 		if self.args.selfdrive == 'True':
 			dirName = self.params['self_drive_dirname']
 		else:
-			dirName = self.params['examples_dirname']
-		dirName += self.args.example
-
+			dirName = self.params['training_dirname']
 		# Create target Directories
-
-		try:
-		  os.mkdir(dirName)
-		  print("Directory " , dirName ,  " Created ")
-		except FileExistsError:
-			if os.listdir(dirName): #directory has data
-				print("Directory " , dirName ,  " already exists: data deleted")
-				try :
-					os.system('rm -r '+dirName+'/*')
-				except:
-					pass
-			else:
-				print('Error in creating Directory')
-		# now make the different class directories 
-		for class_dirname in range(1,10):
+		for class_dirname in range(1,8):
 			try:
-		  		os.mkdir(dirName+'/%d'%class_dirname)
+		  		os.makedirs(os.path.join(dirName,str(class_dirname))
 			except FileExistsError:
-				print("Directory " , dirName+'/1' ,  " already exists: cleaned existing data")
+				print("Directory already exists")
 
 		rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
 		Max_Frames = int(self.args.record_time)*int(self.args.framerate)
+		if self.args.labels == 'True':
+			labels=np.zeros(Max_Frames)
 		print('Max Frames', Max_Frames)
 		frame_num = 0
-		for frame in self.camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+		for frame in self.camera.capture_continuous(rawCapture, format="jpeg", use_video_port=True):
 			image = rawCapture.array
-			classification = get_class()
-
+			if self.args.label == True:
+				img_filename = os.path.join(class_dirname,'data{0:02d}_{0:04d}'.format(self.args.example,get_frame_num))
+				labels[frame_num]=get_class()
+			else:
+				class_dirname = os.path.join(dirname,get_class())
+				img_filename = os.path.join(class_dirname,'data{0:02d}_{0:04d}'.format(self.args.example,get_frame_num))
 			#write to File
-			img_filename = './'+dirName+'/%d/'%classification+'data%04d'%frame_num
 			np.save(img_filename,image,allow_pickle=True)
-				# clear the stream in preparation for the next frame
+			# clear the stream in preparation for the next frame
 			rawCapture.truncate(0)
 			print('stored frame_num', frame_num)
 			frame_num+=1
 			if frame_num == Max_Frames:
 				break
+		if self.args.labels == 'True':
+			np.save(os.path.join(dirname,'{0:02d}'.format(self.args.example)),\
+			labels,allow_pickle=True)
 		print('Finished Collecting Data')
 		pass
 
-
-
-		def capture_image(self): #is this used at all?
-			'''
-			capture frames one by one and store them
-			'''
-			rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
-			Max_Frames = self.args.record_time*self.args.framerate
-			print('Max Frames', Max_Frames)
-			frame_num = 0
-			for frame in self.camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
-				with self._lock:
-					self.image_array = rawCapture
-					self.frame_num+=1
-				print('Captured Frame',frame_num)
-				frame_num +=1
-				rawCapture.truncate(0)
-				if frame_num == Max_Frames:
-					break
 
 		def get_frame_num(self):
 			with self._lock:
@@ -235,6 +123,7 @@ def main():
     parser.add_argument('--framerate',default=30)
     parser.add_argument('--selfdrive',default=False)
     parser.add_argument('--collectdata',default=False)
+	parser.add_argument('--labels', default=False)
     args = parser.parse_args()
     c = ImageProc(args)
     c.collect_data()
