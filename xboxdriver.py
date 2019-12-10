@@ -167,6 +167,7 @@ def main():
 
       xbox_read = XBoxThread(driver,joystick)
       xbox_read.daemon = True
+      print('starting driver')
       xbox_read.start()
       threads.append(xbox_read)
 

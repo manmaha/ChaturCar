@@ -68,25 +68,25 @@ class ImageProc(object):
 			for class_dirname in range(1,8):
 				try:
 					os.makedirs(os.path.join(dirName,str(class_dirname)))
-				except FileExistError:
+				except FileExistsError:
 					print('directories exist')
 
 		with io.BytesIO() as stream:
 			frame_num = 0
 			for frame in self.camera.capture_continuous(stream, format="jpeg" , use_video_port=True):
 				if self.args.labels == 'True':
-					filename = os.path.join(dirName,'data{0}_{1:04d}'.format(self.args.example,frame_num))
-					labels.append()=[get_category(),get_commands()]
+					filename = os.path.join(dirName,'img{0}_{1:04d}.jpg'.format(self.args.example,frame_num))
+					labels.append([get_category(),get_commands()])
 				else:
 					class_dirname = os.path.join(dirName,str(get_category()))
-					filename = os.path.join(class_dirname,'data{0}_{1:04d}'.format(self.args.example,frame_num))
+					filename = os.path.join(class_dirname,'img{0}_{1:04d}.jpg'.format(self.args.example,frame_num))
 				#Write to File
 				with open(filename,"wb") as imagefile:
-                	imagefile.write(my_stream.getbuffer())
+					imagefile.write(stream.getbuffer())
 				# clear the stream in preparation for the next frame
 				stream.seek(0)
 				stream.truncate(0)
-				print('Class Num', get_category(), 'Frame ',frame_num)
+				#print('Class Num', get_category(), 'Frame ',frame_num)
 				frame_num+=1
 				if frame_num == Max_Frames:
 					break
@@ -104,7 +104,7 @@ def main():
 	parser.add_argument('--example', default=params['example'])
 	parser.add_argument('--record_time', default=params['record_time'])
 	parser.add_argument('--framerate',default=params['framerate'])
-	parser.add_argument('--selfdrive',default=params['selfdrive']e)
+	parser.add_argument('--selfdrive',default=params['selfdrive'])
 	parser.add_argument('--collectdata',default=params['collectdata'])
 	parser.add_argument('--labels', default=params['labels'])
 	args = parser.parse_args()

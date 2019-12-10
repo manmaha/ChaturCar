@@ -7,13 +7,13 @@ avg_drive : 0.3
 avg_steer : 0.8
 
 #Driver Parameters
-record_time: 10
+record_time: 30
 drive_time: 10
 hostname: '0.0.0.0'
 port: 5000
-testing: 'True'
+testing: 'False'
 selfdrive: 'False'
-collectdata: 'False'
+collectdata: 'True'
 example: '1'
 labels: 'False'
 
@@ -21,10 +21,10 @@ labels: 'False'
 resolution: [640,480]
 framerate: 10
 rotation: 180
-iso: 200
-exposure_mode: 'off'
-awb_mode: 'off'
+iso: 0 #auto
+exposure_mode: 'auto' #turn off outdoors
+awb_mode: 'auto'  #turn off outdoors
 
 #Data Collection parameters
-training_dirname: 'Train'
+training_dirname: 'ChaturData'
 self_drive_dirname: 'Test'
