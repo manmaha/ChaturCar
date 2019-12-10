@@ -19,7 +19,7 @@ import imageproc
 import models
 import sys
 import evdev
-import joystick
+import joysticks
 
 ## Some helpers ##
 def scale(val, src, dst):
@@ -43,8 +43,8 @@ def clamp(value, floor=-100, ceil=100):
     """
     return max(min(value, ceil), floor)
 
-class PS3Thread(threading.Thread):
-#PS3 Thread
+class XBoxThread(threading.Thread):
+#XBox Thread
     def __init__(self, driver,joystick):
         threading.Thread.__init__(self)
         self.driver = driver
@@ -126,7 +126,7 @@ class PS3Thread(threading.Thread):
 
 
 def main():
-    params = load(open('driver.yaml').read(), Loader=Loader)
+    params = load(open('ChaturCar.yaml').read(), Loader=Loader)
     parser = argparse.ArgumentParser(description='Driver for ChaturCar')
     parser.add_argument('--hostname', default=params['hostname'])
     parser.add_argument('--port', default=params['port'])
@@ -155,8 +155,8 @@ def main():
     driver = chaturcar.ChaturDriver(car,args)
     #car.test()
     if args.selfdrive == 'True' or args.collectdata == 'True':
-        collector = imageproc.ImageProc(args)
-    joystick = joystick.XBoxJoyStick().joystick
+        collector = imageproc.ImageProc(args,params)
+    joystick = joysticks.XBoxJoyStick().joystick
     if joystick : #joystick found
       #start the threaded processes
       threads = list()
@@ -165,10 +165,10 @@ def main():
       '''
       #start the PS3 Driver for reading commands - this is the main thread
 
-      ps3_read = PS3Thread(driver,joystick)
-      ps3_read.daemon = True
-      ps3_read.start()
-      threads.append(ps3_read)
+      xbox_read = XBoxThread(driver,joystick)
+      xbox_read.daemon = True
+      xbox_read.start()
+      threads.append(xbox_read)
 
       '''
       Now the daemon threads as required
@@ -176,7 +176,7 @@ def main():
       '''
       #collect data
       if args.collectdata == 'True':
-        collect_data = threading.Thread(target=collector.collect_data, args=(driver.get_class,),daemon=False)
+        collect_data = threading.Thread(target=collector.collect_data, args=(driver.get_category,driver.get_commands,),daemon=False)
         collect_data.start()
         threads.append(collect_data)
       #self drive

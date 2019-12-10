@@ -126,7 +126,7 @@ class PS3Thread(threading.Thread):
 
 
 def main():
-    params = load(open('driver.yaml').read(), Loader=Loader)
+    params = load(open('ChaturCar.yaml').read(), Loader=Loader)
     parser = argparse.ArgumentParser(description='Driver for ChaturCar')
     parser.add_argument('--hostname', default=params['hostname'])
     parser.add_argument('--port', default=params['port'])

@@ -103,7 +103,7 @@ class ChaturDriver(Driver):
             '''
             with self._lock:
                 self.car.drive(commands)
-            print('sent to car ',commands)
+            #print('sent to car ',commands)
             pass
 
         def get_commands(self):
@@ -116,7 +116,7 @@ class ChaturDriver(Driver):
             commands = [speed[0],speed[1]]
             return commands
 
-        def get_class(self):
+        def get_category(self):
             '''
             Define Classification of Commands to be used in Learning Model
             		Drive +1 Steer 0 : Class 1
@@ -126,7 +126,9 @@ class ChaturDriver(Driver):
             		Drive -1 Steer -1 : Class 5
             		Drive -1 Steer +1 : Class 6
             		Drive 0 : Class 7
+                    returns a string
             '''
+            category = 7
             sensitivity = 0.15
             drive_value, steer_value = self.get_commands()
             # find +1,-1,0 Classification
@@ -134,7 +136,7 @@ class ChaturDriver(Driver):
                 drive = 1
             elif drive_value > -sensitivity:
                 drive = 0
-                return 7
+                category = 7
             else:
                 drive = -1
 
@@ -148,34 +150,25 @@ class ChaturDriver(Driver):
 
             if drive == 1:
                 if steer == 0:
-                    return 1
+                    category = 1
                 elif steer == -1:
-                    return 2
+                    category = 2
                 else:
-                    return 3
+                    category = 3
 
             elif drive == -1:
                 if steer == 0:
-                    return 4
+                    category = 4
                 elif steer == -1:
-                    return 5
+                    category = 5
                 else:
-                    return 6
+                    category = 6
 
-            else:
-                return 7
-                '''
-                if steer == 0:
-                    return 7
-                elif steer == -1:
-                    return 8
-                else:
-                    return 9
-                '''
+            return category
 
 
-        def get_commands_from_class(self,classification):
-            return self.classes.get(classification)
+        def get_commands_from_category(self,category):
+            return self.classes.get(category)
 
         #Web Receiver methods
         #@app.route("/")
@@ -223,7 +216,7 @@ class ChaturDriver(Driver):
             return sys.exit(0)
 
 def main():
-    params = load(open('driver.yaml').read(), Loader=Loader)
+    params = load(open('ChaturCar.yaml').read(), Loader=Loader)
     parser = argparse.ArgumentParser(description='Driver for ChaturCar')
     parser.add_argument('--hostname', default=params['hostname'])
     parser.add_argument('--port', default=params['port'])

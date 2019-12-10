@@ -50,6 +50,59 @@ class ImageProc(object):
 		self.frame_num = 0
 		pass
 
+	def collect_data_new(self,get_class=get_class,get_commands=get_commands):
+		'''
+		collects example data and stores to file in separate directories
+		Classifies the drive/steer data into 7 classes and stores them in relevant Directories
+		'''
+
+		#create requisite Directory
+		if self.args.selfdrive == 'True':
+			dirName = self.params['self_drive_dirname']
+		else:
+			dirName = self.params['training_dirname']
+
+		rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
+		Max_Frames = int(self.args.record_time)*int(self.args.framerate)
+		if self.args.labels == 'True':
+			labels=np.zeros(Max_Frames)
+		else:
+			for class_dirname in range(1,8):
+				try:
+					os.makedirs(os.path.join(dirName,str(class_dirname)))
+				except FileExistError:
+					print('directories exist')
+
+		print('Max Frames', Max_Frames)
+		frame_num = 0
+		for frame in self.camera.capture_continuous(rawCapture, format="bgr" , use_video_port=True):
+			image = rawCapture.array
+			if self.args.labels == 'True':
+				img_filename = os.path.join(dirName,'data{0}_{1:04d}'.format(self.args.example,frame_num))
+				cmd_filename = os.path.join(dirName,'cmd{0}_{1:04d}'.format(self.args.example,frame_num))
+				labels[frame_num]=get_class()
+				cmd = [get_class(),get_commands()]
+				np.save(img_filename,image,allow_pickle=True)
+				np.save(cmd_filename,cmd,allow_pickle=True)
+
+			else:
+				class_dirname = os.path.join(dirName,str(get_class()))
+				img_filename = os.path.join(class_dirname,'data{0}_{1:04d}'.format(self.args.example,frame_num))
+				np.save(img_filename,image,allow_pickle=True)
+
+			# clear the stream in preparation for the next frame
+			rawCapture.truncate(0)
+			print('Class Num', get_class(), 'Frame ',frame_num)
+			frame_num+=1
+			if frame_num == Max_Frames:
+				break
+		if self.args.labels == 'True':
+			np.save(os.path.join(dirName,self.args.example),\
+			labels,allow_pickle=True)
+		print('Finished Collecting Data')
+		self.camera.close()
+		pass
+
 	def collect_data_old1(self,get_commands=get_command):
 		'''
 		collects example data and stores to file
@@ -181,7 +234,7 @@ class ImageProc(object):
 			#write to File
 			img_filename = './'+dirName+'/%d/'%classification+'data%04d'%frame_num
 			np.save(img_filename,image,allow_pickle=True)
-				# clear the stream in preparation for the next frame
+			# clear the stream in preparation for the next frame
 			rawCapture.truncate(0)
 			print('stored frame_num', frame_num)
 			frame_num+=1

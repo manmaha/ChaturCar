@@ -95,7 +95,7 @@ class KeyboardThread(threading.Thread):
 
 
 def main():
-    params = load(open('driver.yaml').read(), Loader=Loader)
+    params = load(open('ChaturCar.yaml').read(), Loader=Loader)
     parser = argparse.ArgumentParser(description='Driver for ChaturCar')
     parser.add_argument('--hostname', default=params['hostname'])
     parser.add_argument('--port', default=params['port'])
@@ -106,6 +106,9 @@ def main():
     parser.add_argument('--drive_time',default=params['drive_time'])
     parser.add_argument('--example', default=params['example'])
     parser.add_argument('--framerate',default=params['framerate'])
+    parser.add_argument('--avg_drive',default=params['avg_drive'])
+    parser.add_argument('--avg_steer',default=params['avg_steer'])
+    parser.add_argument('--labels', default=params['labels'])
     args = parser.parse_args()
 
     # Cleanup done at exit

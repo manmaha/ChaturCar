@@ -1,0 +1,30 @@
+#Car Parameters
+max_steer: 1.0
+max_drive: 0.45
+steer_step: 1.0
+drive_step: 0.15
+avg_drive : 0.3
+avg_steer : 0.8
+
+#Driver Parameters
+record_time: 10
+drive_time: 10
+hostname: '0.0.0.0'
+port: 5000
+testing: 'True'
+selfdrive: 'False'
+collectdata: 'False'
+example: '1'
+labels: 'False'
+
+#Camera Parameters
+resolution: [640,480]
+framerate: 10
+rotation: 180
+iso: 200
+exposure_mode: 'off'
+awb_mode: 'off'
+
+#Data Collection parameters
+training_dirname: 'Train'
+self_drive_dirname: 'Test'
