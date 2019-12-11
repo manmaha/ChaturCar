@@ -2,7 +2,7 @@
 '''
 Contains Implementations for Models for Generating ChaturCar commands
 input = data (image)
-output = commands = [steer,drive]
+output = Category = 1 to 7
 Manish Mahajan
 26 Sep 2019
 '''
@@ -13,5 +13,5 @@ class Models(object):
 class Naive_Model(Models):
     def __init__(self,args):
         super(Naive_Model,self).__init__(args)
-    def generate_commands(self,data):
-        return [0.0,0.0]
+    def generate_category(self,data):
+        return 7

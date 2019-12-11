@@ -70,25 +70,23 @@ class Driver(object):
     def __init__(self,car,args):
         self.car = car
         self.args = args
+        self.commands = [0.,0.] #initialise commands
+        self._lock=threading.RLock()
         pass
 
 class ChaturDriver(Driver):
         def __init__(self,car,args):
             super(ChaturDriver,self).__init__(car,args)
             #Initialise Driver
-            self.commands = [0,0] #initialise commands
-            self._lock=threading.RLock()
-            if args.selfdrive == 'True':
-                #set up selfdrive
-                pass
-
             avg_steer, avg_drive = self.args.avg_steer, self.args.avg_drive
-            self.classes = {1:[0,avg_drive],2:[-avg_steer,avg_drive],\
+            self.categories = {1:[0,avg_drive],2:[-avg_steer,avg_drive],\
             3:[avg_steer,avg_drive],7:[0,0],\
             4:[0,-avg_drive],5:[-avg_steer,-avg_drive],6:[avg_steer,-avg_drive]}
-
-            self.args = args
             pass
+
+        #Start Driving Straight
+        def forward(self):
+            self.send_commands([0, self.args.avg_drive])
 
         def stop(self):
             self.send_commands([0, - self.get_commands()[1]])
@@ -102,6 +100,7 @@ class ChaturDriver(Driver):
             commands are [steer_speed, drive_speed]
             '''
             with self._lock:
+                #self.commands = commands
                 self.car.drive(commands)
             #print('sent to car ',commands)
             pass
@@ -112,6 +111,7 @@ class ChaturDriver(Driver):
             commands are [steer_speed, drive_speed]
             '''
             with self._lock:
+                #return self.commands
                 speed = self.car.get_speed()
             commands = [speed[0],speed[1]]
             return commands
@@ -129,8 +129,8 @@ class ChaturDriver(Driver):
                     returns a string
             '''
             category = 7
-            sensitivity = 0.15
-            drive_value, steer_value = self.get_commands()
+            sensitivity = 0.1
+            steer_value, drive_value = self.get_commands()
             # find +1,-1,0 Classification
             if drive_value > sensitivity:
                 drive = 1
@@ -168,7 +168,7 @@ class ChaturDriver(Driver):
 
 
         def get_commands_from_category(self,category):
-            return self.classes.get(category)
+            return self.categories.get(category)
 
         #Web Receiver methods
         #@app.route("/")
@@ -206,8 +206,8 @@ class ChaturDriver(Driver):
                     pass
                 #new image seen
                 data = collector.get_image()
-                classification = model.generate_class(data)
-                self.send_commands(self.get_commands_from_class(classification))
+                category = model.generate_category(data)
+                self.send_commands(self.get_commands_from_category(category))
 
 
 
@@ -230,6 +230,7 @@ def main():
     parser.add_argument('--avg_steer',default=params['avg_steer'])
     parser.add_argument('--avg_drive',default=params['avg_drive'])
     parser.add_argument('--labels', default=params['labels'])
+
     args = parser.parse_args()
 
     # Cleanup done at exit

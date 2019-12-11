@@ -17,6 +17,7 @@ import time
 import numpy as np
 import argparse
 import threading
+from PIL import Image
 
 
 def get_command():
@@ -45,7 +46,7 @@ class ImageProc(object):
 		self.camera = camera
 		self.args = args
 		self.params = params
-		self.image_array = PiRGBArray(camera, size=camera.resolution)
+		self.image_array = PiRGBArray(camera, size=params['resolution'])
 		self._lock=threading.RLock()
 		self.frame_num = 0
 		pass
@@ -62,7 +63,7 @@ class ImageProc(object):
 		else:
 			dirName = self.params['training_dirname']
 
-		rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
+		rawCapture = PiRGBArray(self.camera, size=self.params['resolution'])
 		Max_Frames = int(self.args.record_time)*int(self.args.framerate)
 		if self.args.labels == 'True':
 			labels=np.zeros(Max_Frames)
@@ -227,7 +228,7 @@ class ImageProc(object):
 		Max_Frames = int(self.args.record_time)*int(self.args.framerate)
 		print('Max Frames', Max_Frames)
 		frame_num = 0
-		for frame in self.camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+		for frame in self.camera.capture_continuous(rawCapture, format="rgb", use_video_port=True):
 			image = rawCapture.array
 			classification = get_class()
 
@@ -245,9 +246,9 @@ class ImageProc(object):
 
 
 
-		def capture_image(self): #is this used at all?
+		def capture_image(self):
 			'''
-			capture frames one by one and store them
+			capture images for the self driver
 			'''
 			rawCapture = PiRGBArray(self.camera, size=self.camera.resolution)
 			Max_Frames = self.args.record_time*self.args.framerate

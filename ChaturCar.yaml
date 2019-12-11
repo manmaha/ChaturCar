@@ -1,13 +1,13 @@
 #Car Parameters
-max_steer: 1.0
-max_drive: 0.45
+max_steer: 0.8
+max_drive: 0.22
 steer_step: 1.0
-drive_step: 0.15
+drive_step: 0.1
 avg_drive : 0.3
 avg_steer : 0.8
 
 #Driver Parameters
-record_time: 30
+record_time: 5
 drive_time: 10
 hostname: '0.0.0.0'
 port: 5000

@@ -10,6 +10,7 @@ Manish Mahajan
 
 import argparse
 import signal
+import time
 import sys
 import threading
 from yaml import load, Loader
@@ -45,18 +46,18 @@ def clamp(value, floor=-100, ceil=100):
 
 class XBoxThread(threading.Thread):
 #XBox Thread
-    def __init__(self, driver,joystick):
+    def __init__(self, driver,joystick,params):
         threading.Thread.__init__(self)
         self.driver = driver
         self.joystick = joystick
+        self.steer_speed, self.drive_speed = driver.get_commands()
+        self.steer_step = params['steer_step']
+        self.drive_step = params['drive_step']
+        self.max_steer =  params['max_steer']
+        self.max_drive =params['max_drive']
 
     def run(self):
-        steer_speed = 0.0
-        drive_speed = 0.0
-        steer_step = 0.5
-        drive_step = 0.15
-        max_steer =  1.0
-        max_drive = 0.45
+
         #print(self.joystick)
         if self.joystick:
             for event in self.joystick.read_loop():
@@ -67,25 +68,25 @@ class XBoxThread(threading.Thread):
                     if event.type == 3:
                         if event.code == 1:         #Y axis on left stick
                             #print(event.value)
-                            change = -scale(event.value,(0,65535),(-max_drive,max_drive)) - drive_speed
-                            if abs(change)>drive_step:
-                                drive_speed = clamp(drive_speed + change,-max_drive,max_drive)
+                            change = -scale(event.value,(0,65535),(-self.max_drive,self.max_drive)) - self.drive_speed
+                            if abs(change)>self.drive_step:
+                                self.drive_speed = clamp(self.drive_speed + change,-self.max_drive,self.max_drive)
                                 changed = True
                             #print('drive_speed: ',drive_speed)
                             #peculiarity in the way XBox controller works, inverting Y axis
                         if event.code == 2:         #X axis on right stick
                             #print(event.value)
                             #steer_speed = scale(event.value,(0,255),(-max_steer,max_steer))
-                            change = scale(event.value,(0,65535),(-max_steer,max_steer))-steer_speed
-                            if abs(change)>steer_step:
-                                steer_speed = clamp(steer_speed + change,-max_steer,max_steer)
+                            change = scale(event.value,(0,65535),(-self.max_steer,self.max_steer))-self.steer_speed
+                            if abs(change)>self.steer_step:
+                                self.steer_speed = clamp(self.steer_speed + change,-self.max_steer,self.max_steer)
                                 changed = True
                             #print('steer_speed: ',steer_speed)
                     if event.type == 1  and event.value == 1 and event.code in [310, 311]:
                         #print("X button is pressed. Stopping.")
                         self.driver.stop()
-                        steer_speed = 0.0
-                        drive_speed = 0.0
+                        self.steer_speed = 0.0
+                        self.drive_speed = 0.0
 
                         '''
                         if "BTN_DPAD_UP" in keyevent.keycode:
@@ -109,7 +110,7 @@ class XBoxThread(threading.Thread):
                     #print(steer_speed,drive_speed)
                     if changed:
                         #print('sending')
-                        self.driver.send_commands([steer_speed,drive_speed])
+                        self.driver.send_commands([self.steer_speed,self.drive_speed])
 
                 except:
                     pass
@@ -151,43 +152,49 @@ def main():
         #car.cleanup()
         pass
 
-    car = chaturcar.ChaturCar()
-    driver = chaturcar.ChaturDriver(car,args)
-    #car.test()
+    #threads = list()
+    #create collector, car and driver object
     if args.selfdrive == 'True' or args.collectdata == 'True':
         collector = imageproc.ImageProc(args,params)
-    joystick = joysticks.XBoxJoyStick().joystick
-    if joystick : #joystick found
-      #start the threaded processes
-      threads = list()
-      '''
-      Thread to receive commands goes here
-      '''
-      #start the PS3 Driver for reading commands - this is the main thread
+    car = chaturcar.ChaturCar()
+    driver = chaturcar.ChaturDriver(car,args)
 
-      xbox_read = XBoxThread(driver,joystick)
-      xbox_read.daemon = True
-      print('starting driver')
-      xbox_read.start()
-      threads.append(xbox_read)
 
-      '''
-      Now the daemon threads as required
-      for collecting example data and self driving
-      '''
-      #collect data
-      if args.collectdata == 'True':
-        collect_data = threading.Thread(target=collector.collect_data, args=(driver.get_category,driver.get_commands,),daemon=False)
+    #create joystick object and start xbox thread
+    if args.collectdata =='True' or args.Testing =='True':
+        joystick = joysticks.XBoxJoyStick().joystick
+        if not joystick:
+            sys.exit('No JoyStick Found: Aborting')
+        xbox_read = XBoxThread(driver,joystick,params)
+        xbox_read.daemon = True
+        print('starting xbox driver')
+        xbox_read.start()
+        #threads.append(xbox_read)
+
+    '''
+    Now threads as required
+    Self Drive will be daemon like xbox thread
+    for collecting example data and self driving
+    '''
+    #collect data
+    if args.collectdata == 'True':
+        #start moving the car forward for 2 seconds before starting data capture
+        driver.forward()
+        time.sleep(2)
+        collect_data = threading.Thread(target=collector.collect_data,\
+            args=(driver.get_category,driver.get_commands,),daemon=False)
         collect_data.start()
-        threads.append(collect_data)
-      #self drive
-      if args.selfdrive == 'True':
-        capture_image = threading.Thread(target=collector.capture_image,daemon=True)
+        #threads.append(collect_data)
+
+    #self drive
+    if args.selfdrive == 'True':
+        capture_image = threading.Thread(target=collector.capture_image,\
+            args=(driver.get_category,driver.get_commands,),daemon=True)
         capture_image.start()
         threads.append(capture_image)
-        self_drive = threading.Thread(target=driver.self_drive,args=(collector,),daemon=True)
+        self_drive = threading.Thread(target=driver.self_drive,args=(collector,))
         self_drive.start()
-        threads.append(self_drive)
+        #threads.append(self_drive)
 
       #join all threads
 #      for index, thread in enumerate(threads):
