@@ -9,7 +9,7 @@ Manish Mahajan
 9 Dec 2019
 '''
 # import the necessary packages
-from yaml import load, Loader
+from yaml import load, Loader, dump
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 import os
@@ -88,7 +88,7 @@ class ImageProc(object):
 				# clear the stream in preparation for the next frame
 				stream.seek(0)
 				stream.truncate(0)
-				print('Category', category,'Commands', get_commands(), 'Frame ',frame_num)
+				#print('Category', category,'Commands', get_commands(), 'Frame ',frame_num)
 				frame_num+=1
 				if frame_num == self.Max_Frames:
 					break
@@ -131,6 +131,9 @@ class ImageProc(object):
 		if self.labels : #labels has Data
 			np.save(os.join(self.dirName,'labels_{0}.npy'\
 				.format(self.args.example)),self.labels,allow_pickle=True)
+		self.params['example']+=1
+		with open('/home/pi/ChaturCar.yaml','w') as outfile:
+			dump(self.params,outfile)
 		pass
 
 	def get_frame_num(self):
