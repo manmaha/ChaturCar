@@ -206,7 +206,7 @@ class ChaturDriver(Driver):
                     pass
                 #new image seen
                 data = collector.get_image()
-                category = model.generate_category(data)
+                category = model.predict_category(data)
                 self.send_commands(self.get_commands_from_category(category))
 
 
