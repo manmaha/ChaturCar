@@ -3,6 +3,7 @@ import tensorflow as tf
 import os
 from yaml import load, Loader, dump
 import argparse
+from PIL import Image
 
 '''
 Contains Implementations for Models for Generating ChaturCar commands
@@ -27,20 +28,22 @@ class Naive_Model(Models):
 
 class Trained_Model(Models):
     def __init__(self,args):
-        super(trained_Model,self).__init__(args)
-        self.model = tf.keras.models.load_model(os.path.join(self.args.modelpath,self.args.modelfile))
-    def predict_category_proba(self,data):
-        x = x/255
+        super(Trained_Model,self).__init__(args)
+        self.model = tf.keras.models.load_model(os.path.join(args.modelpath,args.modelfile))
+    def predict_category_proba(self,x):
+        x = x/255.
         x = np.expand_dims(x,axis=0)
-        return model.predict(x)
+        return self.model.predict(x)
 
 def main():
-	params = load(open('ChaturCar.yaml').read(), Loader=Loader)
-	parser = argparse.ArgumentParser(description='Models')
+    params = load(open('ChaturCar.yaml').read(), Loader=Loader)
+    parser = argparse.ArgumentParser(description='Models')
     parser.add_argument('--modelpath', default=params['modelpath'])
     parser.add_argument('--modelfile', default=params['modelfile'])
-	args = parser.parse_args()
-	m = Trained_Model(args)
+    args = parser.parse_args()
+    m = Trained_Model(args)
+    img = Image.open('/home/pi/ChaturCar/TrainedModels/test.jpg').resize((150,150))
+    print(m.predict_category(np.asarray(img)))
 	# test on one file
 if __name__=="__main__":
         main()
