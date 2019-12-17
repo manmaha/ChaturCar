@@ -141,7 +141,9 @@ def main():
     parser.add_argument('--avg_drive',default=params['avg_drive'])
     parser.add_argument('--avg_steer',default=params['avg_steer'])
     parser.add_argument('--labels', default=params['labels'])
-
+    parser.add_argument('--modelpath', default=params['modelpath'])
+    parser.add_argument('--modelfile', default=params['modelfile'])
+    parser.add_argument('--model', default=params['model'])
     args = parser.parse_args()
 
     # Cleanup done at exit

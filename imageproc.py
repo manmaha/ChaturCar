@@ -15,6 +15,7 @@ from picamera import PiCamera
 import os
 import io
 import time
+import datetime
 import numpy as np
 import argparse
 import threading
@@ -62,7 +63,8 @@ class ImageProc(object):
 				try:
 					os.makedirs(os.path.join(self.dirName,str(class_dirname)))
 				except FileExistsError:
-					print('directories exist')
+					pass
+					#print('directories exist')
 		pass
 
 	def collect_data(self,get_category=get_category,get_commands=get_commands):
@@ -74,15 +76,17 @@ class ImageProc(object):
 			frame_num = 0
 			for _ in self.camera.capture_continuous(stream,format="jpeg",use_video_port=True):
 				category = get_category()
+				timestring = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")[:-3]
+
 				if self.args.labels == 'True':
-					filename = os.path.join(self.dirName,'img{0}_{1:d}_{2:04d}.jpg'\
-					.format(self.args.example,category,frame_num))
+					filepath = self.dirName
 					self.labels.append([category,get_commands()])
 				else:
-					class_dirname = os.path.join(self.dirName,str(category))
-					filename = os.path.join(class_dirname,'img{0}_{1:d}_{2:04d}.jpg'\
-					.format(self.args.example,category,frame_num))
-				#Write to File
+					filepath = os.path.join(self.dirName,str(category))
+
+
+				filename = os.path.join(filepath,'img{0:d}_{1:d}_{2:s}.jpg'\
+					.format(self.args.example,category,timestring))
 				with open(filename,"wb") as imagefile:
 					imagefile.write(stream.getbuffer())
 				# clear the stream in preparation for the next frame
@@ -98,23 +102,27 @@ class ImageProc(object):
 
 	def capture_image(self,get_category=get_category,get_commands=get_commands):
 			'''
-			capture images for the self driver; also stores them in files for later analysis
+			capture images for the self driver; sends data for prediction ;
+			also stores them in files for later analysis
 			'''
 			with picamera.array.PiRGBArray(self.camera) as stream:
 				frame_num = 0
 				for _ in self.camera.capture_continuous(stream,format="rgb",use_video_port=True):
 					category = get_category()
+					timestring = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")[:-3]
 					with self._lock:
 						self.image_array=stream
 						self.frame_num+=1
+
 					if self.args.labels == 'True':
-						filename = os.path.join(self.dirName,'img{0}_{1:d}_{2:04d}.jpg'\
-						.format(self.args.example,category,frame_num))
+						filepath = self.dirName
 						self.labels.append([category,get_commands()])
 					else:
-						class_dirname = os.path.join(self.dirName,str(category))
-						filename = os.path.join(class_dirname,'img{0}_{1:d}_{2:04d}.jpg'\
-						.format(self.args.example,category,frame_num))
+						filepath = os.path.join(self.dirName,str(category))
+
+
+					filename = os.path.join(filepath,'img{0:d}_{1:d}_{2:s}.jpg'\
+						.format(self.args.example,category,timestring))
 					#Write to File, using PIL Image class definition
 					Image.fromarray(stream.array).save(filename)
 					# clear the stream in preparation for the next frame
@@ -129,7 +137,7 @@ class ImageProc(object):
 	def cleanup(self):
 		self.camera.close()
 		if self.labels : #labels has Data
-			np.save(os.join(self.dirName,'labels_{0}.npy'\
+			np.save(os.join(self.dirName,'labels_{0:d}.npy'\
 				.format(self.args.example)),self.labels,allow_pickle=True)
 		self.params['example']+=1
 		with open('/home/pi/ChaturCar.yaml','w') as outfile:
@@ -145,11 +153,12 @@ class ImageProc(object):
 			self.frame_num=frame_num
 		pass
 
-	def set_image(self,image_array):#PIRGBArray):
+	def set_PiRGBimage_array(self,image_array):#PIRGBArray):
 		with self._lock:
 			self.image_array=image_array
 
-	def get_image(self):
+	def get_image_array(self):
+		#returns array attribute
 		with self._lock:
 			return self.image_array.array
 

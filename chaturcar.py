@@ -199,13 +199,16 @@ class ChaturDriver(Driver):
         # Self Driver
         def self_driver(self,collector):
             #Choose Model
-            model = Models.Naive_Model(self.args)
+            if self.args.model = 'Trained':
+                model = Models.Trained_Model(self.args)
+            else:
+                model = Models.Naive_Model(self.args)
             Max_Frames = self.args.drive_time*self.args.framerate
             for frame_num in range(Max_Frames):
                 while frame_num >= collector.get_frame_num(): #new frame has not been posted
                     pass
                 #new image seen
-                data = collector.get_image()
+                data = collector.get_image_array()
                 category = model.predict_category(data)
                 self.send_commands(self.get_commands_from_category(category))
 

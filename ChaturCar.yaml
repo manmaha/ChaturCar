@@ -1,9 +1,9 @@
 #Car Parameters
 max_steer: 0.8
-max_drive: 0.22
+max_drive: 0.45
 steer_step: 1.0
-drive_step: 0.1
-avg_drive : 0.3
+drive_step: 0.3
+avg_drive : 0.35
 avg_steer : 0.8
 
 #Driver Parameters
@@ -18,13 +18,16 @@ example: '1'
 labels: 'False'
 
 #Camera Parameters
-resolution: [640,480]
-framerate: 10
+resolution: [150,150]
+framerate: 5
 rotation: 180
 iso: 0 #auto
-exposure_mode: 'auto' #turn off outdoors
+exposure_mode: 'sports' #turn off outdoors
 awb_mode: 'auto'  #turn off outdoors
 
 #Data Collection parameters
-training_dirname: 'ChaturData'
-self_drive_dirname: 'Test'
+training_dirname: '/home/pi/TrainData'
+self_drive_dirname: '/home/pi/TestData'
+modelpath: '/home/pi/gdrive/ChaturModels'
+modelfile: 'ChaturCar1.h5'
+model: 'Naive'
