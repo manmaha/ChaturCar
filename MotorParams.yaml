@@ -1,0 +1,8 @@
+#Motor GPIO Pins
+StdByPin: 23
+MotorA: [18,22,27]
+MotorB: [19,24,25]
+
+#Other params
+PWM_FREQ : 50
+MAXGAIN : 255

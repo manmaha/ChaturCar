@@ -160,7 +160,7 @@ def main():
     if args.selfdrive == 'True' or args.collectdata == 'True':
         collector = imageproc.ImageProc(args,params)
         print('set up ImageProc')
-    car = chaturcar.ChaturCar()
+    car = chaturcar.PiconCar()
     print('initiated Car')
     driver = chaturcar.ChaturDriver(car,args)
     print('initiated Driver')

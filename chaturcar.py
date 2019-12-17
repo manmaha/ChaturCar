@@ -16,17 +16,18 @@ import sys
 import threading
 from yaml import load, Loader
 import atexit
-import pz
+import picon
+import FNGcontroller
 
-class ChaturCar(pz.Robot):
-    '''Special subclass of pz.Robot class with a steering motor and drive motor
+class PiconCar(picon.Robot):
+    '''Special subclass of picon.Robot class with a steering motor and drive motor
     Also using PiconZero and camera
     Picon Motor A(0) set as steering motor, Motor B(1) set as driving motor
     using the pz robot class without the other features
     Speeds are between -1 and +1
     '''
     def __init__(self):
-        super(ChaturCar,self).__init__()
+        super(PiconCar,self).__init__()
         pass
     def drive(self,commands):
         # this is specific to this piconzero and chassis set up
@@ -65,6 +66,24 @@ class ChaturCar(pz.Robot):
         self.drive([-0.50,-0.50])
         time.sleep(1)
         self.stop()
+
+class FNGCar(FNGcontroller.SteerDriveCar):
+    ''' Special Case of FNG Controller Steer Drive Car, just scales speed from -1/+1 to -100/+100
+    '''
+    def __init__(self):
+        super(FNGCar,self).__init__()
+        pass
+
+    def drive(self,commands):
+        # this is specific to this piconzero and chassis set up
+        steer_speed = commands[0]*100
+        drive_speed = commands[1]*100
+        super(FNGCar,self).drive([steer_speed,drive_speed])
+        pass
+
+    def get_speed(self):
+        return super(FNG_Car,self).get_speed()/100.0
+
 
 class Driver(object):
     def __init__(self,car,args):
