@@ -31,14 +31,15 @@ def get_category():
 
 class ImageProc(object):
 	def __init__(self,args,params):
-		camera = PiCamera()
-		camera.resolution = params['resolution']
-		camera.framerate = args.framerate
+		camera = PiCamera(
+		camera.resolution = params['resolution'],
+		camera.framerate = args.framerate)
 		camera.rotation = params['rotation']
 		camera.iso = params['iso'] #800 for indoors, 200 outdoors
 		# allow the camera to warmup
 		time.sleep(2)
 		#Now Set Fixed Camera Parameters
+		camera.shutter_speed = camera.exposure_speed
 		camera.exposure_mode = params['exposure_mode']
 		g = camera.awb_gains
 		camera.awb_mode = params['awb_mode']
@@ -48,7 +49,6 @@ class ImageProc(object):
 		self.params = params
 		self._lock=threading.RLock()
 		self.image_array = PiRGBArray(camera, size=params['resolution'])
-		self.stream = io.BytesIO()
 		self.frame_num = 0
 		self.Max_Frames = int(args.record_time)*int(args.framerate)
 		#create requisite Directories

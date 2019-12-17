@@ -22,7 +22,8 @@ class Naive_Model(Models):
         super(Naive_Model,self).__init__(args)
     def predict_category_proba(self,data):
         prob_array = np.random.random(7)
-        return prob_array/np.sum(prob_array)
+        prob_array = prob_array/np.sum(prob_array)
+        return prob_array
 
 class Trained_Model(Models):
     def __init__(self,args):
@@ -30,11 +31,8 @@ class Trained_Model(Models):
         self.model = tf.keras.models.load_model(os.path.join(self.args.modelpath,self.args.modelfile))
     def predict_category_proba(self,data):
         x = x/255
-        x = np.exapnd_dims(x,axis=0)
+        x = np.expand_dims(x,axis=0)
         return model.predict(x)
-
-
-
 
 def main():
 	params = load(open('ChaturCar.yaml').read(), Loader=Loader)
@@ -43,6 +41,6 @@ def main():
     parser.add_argument('--modelfile', default=params['modelfile'])
 	args = parser.parse_args()
 	m = Trained_Model(args)
-	c.collect_data()
+	# test on one file
 if __name__=="__main__":
         main()
