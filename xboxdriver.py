@@ -17,7 +17,7 @@ from yaml import load, Loader
 import atexit
 import chaturcar
 import imageproc
-import models
+
 import sys
 import evdev
 import joysticks
@@ -82,7 +82,7 @@ class XBoxThread(threading.Thread):
                                 self.steer_speed = clamp(self.steer_speed + change,-self.max_steer,self.max_steer)
                                 changed = True
                             #print('steer_speed: ',steer_speed)
-                    if event.type == 1  and event.value == 1 and event.code in [310, 311]:
+                    if event.type == 1  and event.value == 1 and event.code in [310, 311,307]:
                         #print("X button is pressed. Stopping.")
                         self.driver.stop()
                         self.steer_speed = 0.0
@@ -102,12 +102,13 @@ class XBoxThread(threading.Thread):
                             steer_speed= max(-max_steer, steer_speed-steer_step)
                             changed = True
 
-                        '''
+
                     if event.type == 1  and event.value == 1 and event.code == 307:
                             print("X button is pressed. Exiting.")
                             self.driver.stop()
                             break
                     #print(steer_speed,drive_speed)
+                    '''
                     if changed:
                         #print('sending')
                         self.driver.send_commands([self.steer_speed,self.drive_speed])
@@ -158,8 +159,11 @@ def main():
     #create collector, car and driver object
     if args.selfdrive == 'True' or args.collectdata == 'True':
         collector = imageproc.ImageProc(args,params)
+        print('set up ImageProc')
     car = chaturcar.ChaturCar()
+    print('initiated Car')
     driver = chaturcar.ChaturDriver(car,args)
+    print('initiated Driver')
 
 
     #create joystick object and start xbox thread
@@ -169,7 +173,6 @@ def main():
             sys.exit('No JoyStick Found: Aborting')
         xbox_read = XBoxThread(driver,joystick,params)
         xbox_read.daemon = True
-        print('starting xbox driver')
         xbox_read.start()
         #threads.append(xbox_read)
 
@@ -183,9 +186,11 @@ def main():
         #start moving the car forward for 2 seconds before starting data capture
         driver.forward()
         time.sleep(2)
+
         collect_data = threading.Thread(target=collector.collect_data,\
             args=(driver.get_category,driver.get_commands,),daemon=False)
         collect_data.start()
+        print('Now Collecting Data')
         #threads.append(collect_data)
 
     #self drive
@@ -196,6 +201,7 @@ def main():
         threads.append(capture_image)
         self_drive = threading.Thread(target=driver.self_drive,args=(collector,))
         self_drive.start()
+        print('Now Self Driving')
         #threads.append(self_drive)
 
       #join all threads

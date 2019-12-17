@@ -14,7 +14,7 @@ port: 5000
 testing: 'False'
 selfdrive: 'False'
 collectdata: 'True'
-example: '1'
+example: 1
 labels: 'False'
 
 #Camera Parameters

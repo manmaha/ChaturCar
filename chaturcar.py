@@ -198,8 +198,9 @@ class ChaturDriver(Driver):
 
         # Self Driver
         def self_driver(self,collector):
+            import models
             #Choose Model
-            if self.args.model = 'Trained':
+            if self.args.model == 'Trained':
                 model = Models.Trained_Model(self.args)
             else:
                 model = Models.Naive_Model(self.args)

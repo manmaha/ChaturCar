@@ -15,7 +15,7 @@ from picamera import PiCamera
 import os
 import io
 import time
-import datetime
+from datetime import datetime
 import numpy as np
 import argparse
 import threading
@@ -32,8 +32,8 @@ def get_category():
 class ImageProc(object):
 	def __init__(self,args,params):
 		camera = PiCamera(
-		camera.resolution = params['resolution'],
-		camera.framerate = args.framerate)
+		resolution = params['resolution'],
+		framerate = args.framerate)
 		camera.rotation = params['rotation']
 		camera.iso = params['iso'] #800 for indoors, 200 outdoors
 		# allow the camera to warmup
@@ -85,7 +85,7 @@ class ImageProc(object):
 					filepath = os.path.join(self.dirName,str(category))
 
 
-				filename = os.path.join(filepath,'img{0:d}_{1:d}_{2:s}.jpg'\
+				filename = os.path.join(filepath,'img{0:d}_{1:d}_{2}.jpg'\
 					.format(self.args.example,category,timestring))
 				with open(filename,"wb") as imagefile:
 					imagefile.write(stream.getbuffer())
@@ -96,7 +96,7 @@ class ImageProc(object):
 				frame_num+=1
 				if frame_num == self.Max_Frames:
 					break
-		print('Finished Collecting Data')
+		print('Finished Collecting {0:d} frames'.format(self.Max_Frames))
 		self.cleanup()
 		pass
 
@@ -121,7 +121,7 @@ class ImageProc(object):
 						filepath = os.path.join(self.dirName,str(category))
 
 
-					filename = os.path.join(filepath,'img{0:d}_{1:d}_{2:s}.jpg'\
+					filename = os.path.join(filepath,'img{0:d}_{1:d}_{2}.jpg'\
 						.format(self.args.example,category,timestring))
 					#Write to File, using PIL Image class definition
 					Image.fromarray(stream.array).save(filename)
@@ -130,13 +130,13 @@ class ImageProc(object):
 					frame_num+=1
 					if frame_num == self.Max_Frames:
 						break
-			print('Finished Recording Images')
+			print('Finished Recording {0:d} Images'.format(self.Max_Frames))
 			self.cleanup()
 			pass
 
 	def cleanup(self):
 		self.camera.close()
-		if self.labels : #labels has Data
+		if self.args.labels=='True' :
 			np.save(os.join(self.dirName,'labels_{0:d}.npy'\
 				.format(self.args.example)),self.labels,allow_pickle=True)
 		self.params['example']+=1
