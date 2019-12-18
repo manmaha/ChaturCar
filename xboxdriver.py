@@ -50,72 +50,52 @@ class XBoxThread(threading.Thread):
         threading.Thread.__init__(self)
         self.driver = driver
         self.joystick = joystick
-        self.steer_speed, self.drive_speed = driver.get_commands()
         self.steer_step = params['steer_step']
         self.drive_step = params['drive_step']
         self.max_steer =  params['max_steer']
         self.max_drive =params['max_drive']
 
     def run(self):
-
-        #print(self.joystick)
         if self.joystick:
             for event in self.joystick.read_loop():
+                steer_speed,drive_speed = self.driver.get_commands()
                 changed = False
                 try:
                     #One of the sticks is moved
-                    keyevent = evdev.categorize(event)
+                    #keyevent = evdev.categorize(event)
                     if event.type == 3:
                         if event.code == 1:         #Y axis on left stick
                             #print(event.value)
-                            change = -scale(event.value,(0,65535),(-self.max_drive,self.max_drive)) - self.drive_speed
+                            change = -scale(event.value,(0,65535),\
+                                    (-self.max_drive,self.max_drive)) - drive_speed
                             if abs(change)>self.drive_step:
-                                self.drive_speed = clamp(self.drive_speed + change,-self.max_drive,self.max_drive)
+                                drive_speed = clamp(drive_speed + change,\
+                                -self.max_drive,self.max_drive)
                                 changed = True
-                            #print('drive_speed: ',drive_speed)
                             #peculiarity in the way XBox controller works, inverting Y axis
                         if event.code == 2:         #X axis on right stick
                             #print(event.value)
-                            #steer_speed = scale(event.value,(0,255),(-max_steer,max_steer))
-                            change = scale(event.value,(0,65535),(-self.max_steer,self.max_steer))-self.steer_speed
+                            change = scale(event.value,(0,65535),\
+                                    (-self.max_steer,self.max_steer))-steer_speed
+                            #print(change)
                             if abs(change)>self.steer_step:
-                                self.steer_speed = clamp(self.steer_speed + change,-self.max_steer,self.max_steer)
+                                steer_speed = clamp(steer_speed + change,\
+                                -self.max_steer,self.max_steer)
                                 changed = True
-                            #print('steer_speed: ',steer_speed)
-                    if event.type == 1  and event.value == 1 and event.code in [310, 311,307]:
-                        #print("X button is pressed. Stopping.")
+                    if event.type == 1  and event.value == 1 and event.code in [307,308,309]:
+                        print("Stopping")
                         self.driver.stop()
-                        self.steer_speed = 0.0
-                        self.drive_speed = 0.0
+                        steer_speed = 0.0
+                        drive_speed = 0.0
+                        changed = True
 
-                        '''
-                        if "BTN_DPAD_UP" in keyevent.keycode:
-                            drive_speed =min(max_drive, drive_speed+drive_step)
-                            changed = True
-                        elif "BTN_DPAD_DOWN" in keyevent.keycode:
-                            drive_speed =max(-max_drive, drive_speed-drive_step)
-                            changed = True
-                        elif "BTN_DPAD_RIGHT" in keyevent.keycode:
-                            steer_speed =min(max_steer, steer_speed+steer_step)
-                            changed = True
-                        elif "BTN_DPAD_LEFT" in keyevent.keycode:
-                            steer_speed= max(-max_steer, steer_speed-steer_step)
-                            changed = True
-
-
-                    if event.type == 1  and event.value == 1 and event.code == 307:
-                            print("X button is pressed. Exiting.")
-                            self.driver.stop()
-                            break
-                    #print(steer_speed,drive_speed)
-                    '''
                     if changed:
-                        #print('sending')
-                        self.driver.send_commands([self.steer_speed,self.drive_speed])
+                        #print('sending', steer_speed,drive_speed)
+                        self.driver.send_commands([steer_speed,drive_speed])
 
                 except:
                     pass
-                    #print('Problem Key Pressed')
+                    print('Problem Key Pressed')
 
 
 
@@ -168,7 +148,7 @@ def main():
 
     #create joystick object and start xbox thread
     if args.collectdata =='True' or args.Testing =='True':
-        joystick = joysticks.XBoxJoyStick().joystick
+        joystick = joysticks.JoyStick('Xbox Wireless Controller').joystick
         if not joystick:
             sys.exit('No JoyStick Found: Aborting')
         xbox_read = XBoxThread(driver,joystick,params)

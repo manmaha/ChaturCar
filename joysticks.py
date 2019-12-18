@@ -7,31 +7,30 @@
 '''
 
 import evdev
-
-class XBoxJoyStick(object):
-	def __init__(self):
-		print ('Finding XBox Controller')
+class JoyStick(object):
+	def __init__(self,jstickName):
+		print('Finding ', jstickName)
 		self.joystick = None
 		devices = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
 		for device in devices:
 		#print(device.name)
-			if device.name == 'Xbox Wireless Controller':
+			if device.name == jstickName:
+				self.device = device
 				self.joystick = evdev.InputDevice(device.fn)
 				print(device.name, 'found')
 				break
 		if not self.joystick:
 			print('No  Joystick Found')
 
-class PS3JoyStick(object):
+	def capabilities(self,verbose=True):
+		return self.device.capabilities(verbose=verbose)
+
+'''
+class XBoxJoyStick(JoyStick):
 	def __init__(self):
-		print ('Finding PS3 Controller')
-		self.joystick = None
-		devices = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
-		for device in devices:
-		#print(device.name)
-			if device.name == 'PLAYSTATION(R)3 Controller':
-				self.joystick = evdev.InputDevice(device.fn)
-				print(device.name, 'found')
-				break
-		if not self.joystick:
-			print('No  Joystick Found')
+		super(JoyStick,self).__init__('Xbox Wireless Controller')
+
+class PS3JoyStick(JoyStick):
+	def __init__(self):
+		super(JoyStick,self).__init__('PLAYSTATION(R)3 Controller')
+'''

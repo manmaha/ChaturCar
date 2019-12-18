@@ -140,7 +140,7 @@ class ImageProc(object):
 			np.save(os.join(self.dirName,'labels_{0:d}.npy'\
 				.format(self.args.example)),self.labels,allow_pickle=True)
 		self.params['example']+=1
-		with open('/home/pi/ChaturCar.yaml','w') as outfile:
+		with open('/home/pi/ChaturCar/ChaturCar.yaml','w') as outfile:
 			dump(self.params,outfile)
 		pass
 
