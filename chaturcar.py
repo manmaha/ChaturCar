@@ -31,9 +31,9 @@ class PiconCar(picon.Robot):
         pass
     def drive(self,commands):
         # this is specific to this piconzero and chassis set up
-        steer_speed = commands[0]
-        drive_speed = commands[1]
-        self.set_motors(steer_speed,drive_speed)
+        #steer_speed = commands[0]
+        #drive_speed = commands[1]
+        self.set_motors(commands)
         pass
     def forward(self,speed=1.0):
         self.drive([0,speed])
@@ -68,50 +68,61 @@ class PiconCar(picon.Robot):
         self.stop()
 
 class FNGCar(FNGcontroller.SteerDriveCar):
-    ''' Special Case of FNG Controller Steer Drive Car, just scales speed from -1/+1 to -100/+100
+    ''' Special Case of FNG Controller Steer Drive Car,
+        scales speed from -1/+1 to -100/+100
     '''
     def __init__(self):
         super(FNGCar,self).__init__()
         pass
 
     def drive(self,commands):
-        # this is specific to this piconzero and chassis set up
-        steer_speed = commands[0]*100
-        drive_speed = commands[1]*100
-        super(FNGCar,self).drive([steer_speed,drive_speed])
+        # this is specific to this FNGDriver and chassis set up
+        #motor A is inverted, also scaling from -1/+1 to -100/100
+        commands[1]=-commands[1]
+        super(FNGCar,self).drive([100.0*c for c in commands])
         pass
 
     def get_speed(self):
-        return super(FNG_Car,self).get_speed()/100.0
+        #reverse the above function
+        speed = [s/100.0 for s in super(FNGCar,self).get_speed()]
+        speed[1]=-speed[1]
+        return speed
 
 
 class Driver(object):
     def __init__(self,car,args):
         self.car = car
         self.args = args
-        self.commands = [0.,0.] #initialise commands
         self._lock=threading.RLock()
         pass
 
 class ChaturDriver(Driver):
         def __init__(self,car,args):
             super(ChaturDriver,self).__init__(car,args)
-            #Initialise Driver
+            #set up Categories
             avg_steer, avg_drive = self.args.avg_steer, self.args.avg_drive
             self.categories = {1:[0,avg_drive],2:[-avg_steer,avg_drive],\
             3:[avg_steer,avg_drive],7:[0,0],\
             4:[0,-avg_drive],5:[-avg_steer,-avg_drive],6:[avg_steer,-avg_drive]}
+            #Start Driving and Check if driver needs to Exit
+            self.driving = True
+            car.forward(avg_drive)
             pass
 
-        #Start Driving Straight
-        def forward(self):
-            self.send_commands([0, self.args.avg_drive])
+        def stop_driving(self):
+            self.driving = False
+            self.car.stop()
+            self.car.cleanup()
+
+        def is_driving(self):
+            return self.driving
 
         def stop(self):
-            self.send_commands([0, - self.get_commands()[1]])
-            time.sleep(0.25)
+            #self.send_commands([0, - self.get_commands()[1]])
+            #time.sleep(0.25)
             self.car.stop()
-            return self.web_interface()
+            #return self.web_interface()
+
         # Command Methods
         def send_commands(self,commands):
             '''
@@ -119,21 +130,17 @@ class ChaturDriver(Driver):
             commands are [steer_speed, drive_speed]
             '''
             with self._lock:
-                #self.commands = commands
                 self.car.drive(commands)
             #print('sent to car ',commands)
-            pass
 
         def get_commands(self):
             '''
-            get commanded speeds from pz.car
+            get commanded speeds from car
             commands are [steer_speed, drive_speed]
             '''
             with self._lock:
                 #return self.commands
-                speed = self.car.get_speed()
-            commands = [speed[0],speed[1]]
-            return commands
+                return self.car.get_speed()
 
         def get_category(self):
             '''
@@ -216,15 +223,16 @@ class ChaturDriver(Driver):
                 self.send_commands(commands)
 
         # Self Driver
-        def self_driver(self,collector):
+        def self_driver(self,collector,is_driving):
             import models
             #Choose Model
             if self.args.model == 'Trained':
                 model = Models.Trained_Model(self.args)
             else:
                 model = Models.Naive_Model(self.args)
-            Max_Frames = self.args.drive_time*self.args.framerate
-            for frame_num in range(Max_Frames):
+            #Max_Frames = self.args.drive_time*self.args.framerate
+            #for frame_num in range(Max_Frames):
+            while is_driving():
                 while frame_num >= collector.get_frame_num(): #new frame has not been posted
                     pass
                 #new image seen
@@ -235,7 +243,8 @@ class ChaturDriver(Driver):
 
 
         #utility methods
-        def exit_driver(self):
+        def cleanup(self):
+            self.car.cleanup()
             return sys.exit(0)
 
 def main():

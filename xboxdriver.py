@@ -71,6 +71,7 @@ class XBoxThread(threading.Thread):
                             if abs(change)>self.drive_step:
                                 drive_speed = clamp(drive_speed + change,\
                                 -self.max_drive,self.max_drive)
+                                print('chenged drive speed', drive_speed)
                                 changed = True
                             #peculiarity in the way XBox controller works, inverting Y axis
                         if event.code == 2:         #X axis on right stick
@@ -81,16 +82,22 @@ class XBoxThread(threading.Thread):
                             if abs(change)>self.steer_step:
                                 steer_speed = clamp(steer_speed + change,\
                                 -self.max_steer,self.max_steer)
+                                print('chenged steer speed', steer_speed)
                                 changed = True
-                    if event.type == 1  and event.value == 1 and event.code in [307,308,309]:
+                    if event.type == 1  and event.value == 1 and event.code in [308,309]:
                         print("Stopping")
                         self.driver.stop()
                         steer_speed = 0.0
                         drive_speed = 0.0
                         changed = True
 
+                    if event.type == 1  and event.value == 1 and event.code in [307]:
+                        self.driver.stop_driving()
+                        print("Exiting")
+                        break
+
                     if changed:
-                        #print('sending', steer_speed,drive_speed)
+                        print('sending', steer_speed,drive_speed)
                         self.driver.send_commands([steer_speed,drive_speed])
 
                 except:
@@ -130,22 +137,18 @@ def main():
     # Cleanup done at exit
     @atexit.register
     def shutdownChaturCar():
-        print('EXITING')
-        car.stop()
-        #car.cleanup()
-        pass
+        try:
+            car.stop()
+            print('Stopped before Exit')
+            car.cleanup()
+            print('Cleaned Up')
+        except:
+            pass
 
-    #threads = list()
+    threads = list()
     #create collector, car and driver object
-    if args.selfdrive == 'True' or args.collectdata == 'True':
-        collector = imageproc.ImageProc(args,params)
-        print('set up ImageProc')
-    car = chaturcar.PiconCar()
-    print('initiated Car')
+    car = chaturcar.FNGCar()
     driver = chaturcar.ChaturDriver(car,args)
-    print('initiated Driver')
-
-
     #create joystick object and start xbox thread
     if args.collectdata =='True' or args.Testing =='True':
         joystick = joysticks.JoyStick('Xbox Wireless Controller').joystick
@@ -154,8 +157,9 @@ def main():
         xbox_read = XBoxThread(driver,joystick,params)
         xbox_read.daemon = True
         xbox_read.start()
-        #threads.append(xbox_read)
-
+        threads.append(xbox_read)
+    if args.selfdrive == 'True' or args.collectdata == 'True':
+        collector = imageproc.ImageProc(args,params)
     '''
     Now threads as required
     Self Drive will be daemon like xbox thread
@@ -163,30 +167,26 @@ def main():
     '''
     #collect data
     if args.collectdata == 'True':
-        #start moving the car forward for 2 seconds before starting data capture
-        driver.forward()
-        time.sleep(2)
-
         collect_data = threading.Thread(target=collector.collect_data,\
             args=(driver.get_category,driver.get_commands,),daemon=False)
         collect_data.start()
         print('Now Collecting Data')
-        #threads.append(collect_data)
+        threads.append(collect_data)
 
     #self drive
     if args.selfdrive == 'True':
         capture_image = threading.Thread(target=collector.capture_image,\
-            args=(driver.get_category,driver.get_commands,),daemon=True)
+            args=(driver.get_category,driver.get_commands, driver.is_driving,),daemon=False)
         capture_image.start()
         threads.append(capture_image)
-        self_drive = threading.Thread(target=driver.self_drive,args=(collector,))
+        self_drive = threading.Thread(target=driver.self_drive,args=(collector,driver.is_driving,),daemon=True)
         self_drive.start()
         print('Now Self Driving')
-        #threads.append(self_drive)
+        threads.append(self_drive)
 
       #join all threads
-#      for index, thread in enumerate(threads):
-#          thread.join()
+     for index, thread in enumerate(threads):
+         thread.join()
 
     pass
 

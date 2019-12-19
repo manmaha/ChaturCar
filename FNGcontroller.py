@@ -96,18 +96,21 @@ Object with two Motors - can be diff drive or steer drive
 
 class Car(object):
     def __init__(self):
-      params = load(open('MotorParam1.yaml').read(), Loader=Loader)
+      params = load(open('MotorParams.yaml').read(), Loader=Loader)
       pi = pigpio.pi()
       self.motors = [Motor(gpiopins,pi,params['PWM_FREQ'],params['MAX_DC'])\
        for gpiopins in params['motorpins']]
       self.stop()
-      pass
+      #self._lock=threading.RLock()
 
     def drive(self,commands):
+      # change depending on motor orientation
+      self.speed = commands
       for motor, command in  zip(self.motors,commands):
+       #commands can be negative, motor driver cannot take negative speeds
        direction = command > 0
        motor.move(abs(command),direction)
-      self.speed = commands
+
 
     def get_speed(self):
         return self.speed
@@ -121,11 +124,11 @@ class Car(object):
     def test(self):
         print('Testing Car')
         print('Forward 1 seconds')
-        self.forward(25)
+        self.forward(50)
         time.sleep(1)
         self.stop()
         print('Backward 1 seconds')
-        self.reverse(25)
+        self.reverse(50)
         time.sleep(1)
         self.stop()
         print('Test Steering')
@@ -135,10 +138,10 @@ class Car(object):
         time.sleep(1)
         self.stop()
         print('Test Circle')
-        self.drive([50,50])
+        self.drive([100,50])
         time.sleep(1)
         self.stop()
-        self.drive([-50,-50])
+        self.drive([-100,-50])
         time.sleep(1)
         self.stop()
 

@@ -25,6 +25,9 @@ from PIL import Image
 def get_commands():
 	return np.random.randn(2)
 
+def is_driving():
+	return True
+
 def get_category():
 	return 1
 #####
@@ -50,7 +53,7 @@ class ImageProc(object):
 		self._lock=threading.RLock()
 		self.image_array = PiRGBArray(camera, size=params['resolution'])
 		self.frame_num = 0
-		self.Max_Frames = int(args.record_time)*int(args.framerate)
+		#self.Max_Frames = int(args.record_time)*int(args.framerate)
 		#create requisite Directories
 		if args.selfdrive == 'True':
 			self.dirName = params['self_drive_dirname']
@@ -67,7 +70,8 @@ class ImageProc(object):
 					#print('directories exist')
 		pass
 
-	def collect_data(self,get_category=get_category,get_commands=get_commands):
+	def collect_data(self,get_category=get_category,\
+			get_commands=get_commands,is_driving=is_driving):
 		'''
 		collects example data and stores to file in separate directories
 		Classifies the drive/steer data into 7 classes and stores them in relevant Directories
@@ -75,6 +79,8 @@ class ImageProc(object):
 		with io.BytesIO() as stream:
 			frame_num = 0
 			for _ in self.camera.capture_continuous(stream,format="jpeg",use_video_port=True):
+				if not is_driving():
+					break
 				category = get_category()
 				timestring = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")[:-3]
 
@@ -94,13 +100,14 @@ class ImageProc(object):
 				stream.truncate(0)
 				#print('Category', category,'Commands', get_commands(), 'Frame ',frame_num)
 				frame_num+=1
-				if frame_num == self.Max_Frames:
-					break
-		print('Finished Collecting {0:d} frames'.format(self.Max_Frames))
+				#if frame_num == self.Max_Frames:
+				#	break
+			print('Finished Collecting {0:d} frames'.format(frame_num))
 		self.cleanup()
 		pass
 
-	def capture_image(self,get_category=get_category,get_commands=get_commands):
+	def capture_image(self,get_category=get_category,\
+			get_commands=get_commands,is_driving=is_driving):
 			'''
 			capture images for the self driver; sends data for prediction ;
 			also stores them in files for later analysis
@@ -108,6 +115,9 @@ class ImageProc(object):
 			with picamera.array.PiRGBArray(self.camera) as stream:
 				frame_num = 0
 				for _ in self.camera.capture_continuous(stream,format="rgb",use_video_port=True):
+					if not is_driving():
+						print('not driving')
+						break
 					category = get_category()
 					timestring = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")[:-3]
 					with self._lock:
@@ -128,9 +138,9 @@ class ImageProc(object):
 					# clear the stream in preparation for the next frame
 					stream.truncate(0)
 					frame_num+=1
-					if frame_num == self.Max_Frames:
-						break
-			print('Finished Recording {0:d} Images'.format(self.Max_Frames))
+					#if frame_num == self.Max_Frames:
+					#	break
+				print('Finished Recording {0:d} Images'.format(frame_num))
 			self.cleanup()
 			pass
 
@@ -142,6 +152,7 @@ class ImageProc(object):
 		self.params['example']+=1
 		with open('/home/pi/ChaturCar/ChaturCar.yaml','w') as outfile:
 			dump(self.params,outfile)
+		print('ImageProc Cleaned Up')
 		pass
 
 	def get_frame_num(self):

@@ -27,8 +27,9 @@ def clamp(value, floor=-100, ceil=100):
 ## Initializing ##
 
 js = joysticks.JoyStick('Xbox Wireless Controller')
-print(js.capabilities())
+
 js = js.joystick
+print(js.capabilities())
 
 for event in js.read_loop():   #this loops infinitely
     keyevent = evdev.categorize(event)
