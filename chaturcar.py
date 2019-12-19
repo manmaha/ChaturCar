@@ -107,6 +107,7 @@ class ChaturDriver(Driver):
                                 7:0.833*steer}
             #Start Driving and Check if driver needs to Exit
             self.driving = True
+            self.pausing = False
             car.forward(args.max_drive)
             pass
 
@@ -126,6 +127,20 @@ class ChaturDriver(Driver):
             #time.sleep(0.25)
             self.car.stop()
             #return self.web_interface()
+
+        def pause(self):
+            with self._lock:
+                self.pausing = True
+            self.car.stop()
+
+        def start_after_pause(self):
+            with self._lock:
+                self.pausing = False
+            self.car.forward(self.args.max_drive)
+
+        def is_paused(self):
+            with self._lock:
+                return self.pausing
 
         # Command Methods
         def send_commands(self,commands):
@@ -174,6 +189,7 @@ class ChaturDriver(Driver):
                 category = 3
             elif steer_value > -0.67*self.args.max_steer:
                 category = 2
+            print('steer speed',steer_value,' category', category)
             return category
 
         def get_commands_from_category(self,category):
@@ -206,7 +222,7 @@ class ChaturDriver(Driver):
                 self.send_commands(commands)
 
         # Self Driver
-        def self_driver(self,collector,is_driving):
+        def self_driver(self,collector,is_driving=is_driving,is_paused=is_paused):
             import models
             #Choose Model
             if self.args.model == 'Trained':
@@ -216,6 +232,8 @@ class ChaturDriver(Driver):
             #Max_Frames = self.args.drive_time*self.args.framerate
             #for frame_num in range(Max_Frames):
             while is_driving():
+                while is_paused():
+                    time.sleep(0.25)
                 while frame_num >= collector.get_frame_num(): #new frame has not been posted
                     pass
                 #new image seen

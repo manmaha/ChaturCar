@@ -14,6 +14,7 @@ from picamera.array import PiRGBArray
 from picamera import PiCamera
 import os
 import io
+import sys
 import time
 from datetime import datetime
 import numpy as np
@@ -24,19 +25,22 @@ from PIL import Image
 #Testing Functions
 def get_commands():
 	return np.random.randn(2)
-
 def is_driving():
 	return True
-
+def is_paused():
+	return False
 def get_category():
 	return 1
 #####
 
 class ImageProc(object):
 	def __init__(self,args,params):
-		camera = PiCamera(
-		resolution = params['resolution'],
-		framerate = args.framerate)
+		try:
+			camera = PiCamera(
+				resolution = params['resolution'],
+				framerate = args.framerate)
+		except:
+			sys.exit('could not set up camera')
 		camera.rotation = params['rotation']
 		camera.iso = params['iso'] #800 for indoors, 200 outdoors
 		# allow the camera to warmup
@@ -71,7 +75,7 @@ class ImageProc(object):
 		pass
 
 	def collect_data(self,get_category=get_category,\
-			get_commands=get_commands,is_driving=is_driving):
+			get_commands=get_commands,is_driving=is_driving,is_paused=is_paused):
 		'''
 		collects example data and stores to file in separate directories
 		Classifies the drive/steer data into 7 classes and stores them in relevant Directories
@@ -81,6 +85,8 @@ class ImageProc(object):
 			for _ in self.camera.capture_continuous(stream,format="jpeg",use_video_port=True):
 				if not is_driving():
 					break
+				while is_paused():
+					time.sleep(0.5)
 				category = get_category()
 				timestring = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")[:-3]
 
@@ -107,7 +113,7 @@ class ImageProc(object):
 		pass
 
 	def capture_image(self,get_category=get_category,\
-			get_commands=get_commands,is_driving=is_driving):
+			get_commands=get_commands,is_driving=is_driving,is_paused=is_paused):
 			'''
 			capture images for the self driver; sends data for prediction ;
 			also stores them in files for later analysis
@@ -115,12 +121,10 @@ class ImageProc(object):
 			with picamera.array.PiRGBArray(self.camera) as stream:
 				frame_num = 0
 				for _ in self.camera.capture_continuous(stream,format="rgb",use_video_port=True):
-
 					if not is_driving():
-						print('not driving')
 						break
-					else:
-						print('driving')
+					while is_paused():
+						time.sleep(0.5)
 					category = get_category()
 					timestring = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")[:-3]
 					with self._lock:

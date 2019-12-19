@@ -87,10 +87,15 @@ class XBoxThread(threading.Thread):
                         changed = True
                 if event.type == 1  and event.value == 1 and event.code in [308,309]:
                     self.driver.stop()
-                if event.type == 1  and event.value == 1 and event.code in [307]:
+                if event.type == 1  and event.value == 1 and event.code == 307:
                     self.driver.stop_driving()
                     print("Exiting")
                     break
+                if event.type == 1  and event.value == 1 and event.code == 306:
+                    self.driver.pause()
+                    print("Pausing")
+                if event.type == 1  and event.value == 1 and event.code == 304:
+                    self.driver.start_after_pause()
                 if changed:
                     #print('sending', steer_speed,drive_speed)
                     self.driver.send_commands([steer_speed,drive_speed])
@@ -152,7 +157,8 @@ def main():
     #collect data
     if args.collectdata == 'True':
         collect_data = threading.Thread(target=collector.collect_data,\
-            args=(driver.get_category,driver.get_commands,driver.is_driving,),daemon=False)
+            args=(driver.get_category,driver.get_commands,driver.is_driving,\
+            driver.is_paused,),daemon=False)
         collect_data.start()
         print('Now Collecting Data')
         threads.append(collect_data)
@@ -160,10 +166,12 @@ def main():
     #self drive
     if args.selfdrive == 'True':
         capture_image = threading.Thread(target=collector.capture_image,\
-            args=(driver.get_category,driver.get_commands, driver.is_driving,),daemon=False)
+            args=(driver.get_category,driver.get_commands,\
+             driver.is_driving,driver.is_paused,),daemon=False)
         capture_image.start()
         threads.append(capture_image)
-        self_drive = threading.Thread(target=driver.self_drive,args=(collector,driver.is_driving,),daemon=True)
+        self_drive = threading.Thread(target=driver.self_drive,\
+                args=(collector,driver.is_driving,),daemon=True)
         self_drive.start()
         print('Now Self Driving')
         threads.append(self_drive)

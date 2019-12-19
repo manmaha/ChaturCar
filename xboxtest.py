@@ -47,6 +47,5 @@ for event in js.read_loop():   #this loops infinitely
             turn = scale(event.value,(0,255),(-1.0,1.0))
             print(keyevent)
         #print(speed,turn)
-    if event.type ==1 and event.code == 307 and event.value == 1:
-            print("X button is pressed. Stopping.")
-            break
+    if event.type ==1 and event.code in[304,305,306,307] and event.value == 1:
+            print(keyevent)
