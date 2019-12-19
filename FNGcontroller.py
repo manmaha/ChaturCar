@@ -150,6 +150,7 @@ class Car(object):
     def cleanup(self):
         for m in self.motors:
             m.cleanup()
+        self.motors[0].pi.stop()
 
 class SteerDriveCar(Car):
     ''' Steer Drive Car, Motor A = Steer, Motor B = Drive
@@ -174,6 +175,26 @@ class SteerDriveCar(Car):
     def steer_right(self,speed=100):
         self.drive([speed,0])
 
+class DiffDriveCar(Car):
+    ''' Diff Drive Car, Motor 1 = Left, Motor 2 = Right
+    '''
+    def __init__(self,pi):
+        super(DiffDriveCar,self).__init__(pi)
+        pass
+    def drive(self,commands):
+        super(DiffDriveCar,self).drive(commands)
+        # this is specific to this chassis set up
+        #left_speed = commands[0]
+        #right_speed = commands[1]
+        pass
+    def forward(self,speed=100):
+        self.drive([speed,speed])
+    def reverse(self,speed=100):
+        self.drive([-speed,-speed])
+    def steer_left(self,speed=100):
+        self.drive([-speed,speed])
+    def steer_right(self,speed=100):
+        self.drive([speed,-speed])
 
 
 
