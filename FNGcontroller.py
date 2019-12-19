@@ -96,28 +96,24 @@ Object with two Motors - can be diff drive or steer drive
 
 class Car(object):
     def __init__(self):
-      params = load(open('MotorParams.yaml').read(), Loader=Loader)
+      params = load(open('MotorParam1.yaml').read(), Loader=Loader)
       pi = pigpio.pi()
       self.motors = [Motor(gpiopins,pi,params['PWM_FREQ'],params['MAX_DC'])\
        for gpiopins in params['motorpins']]
-      self.speed = [0.0,0.0]
       self.stop()
       pass
 
     def drive(self,commands):
+	for m,c in  zip(self.motors,commands):
+		m.move(c)
         self.speed = commands
-        self.motors[0].move(commands[0])
-        self.motors[1].move(commands[1])
         pass
 
     def get_speed(self):
         return self.speed
 
-    def drive(self,commands):
-        #implemented specific to each car subclass
-        pass
-
     def stop(self):
+	self.speed = [0.0, 0.0]
         for m in self.motors:
             m.stop()
         pass
@@ -158,14 +154,6 @@ class SteerDriveCar(Car):
     def __init__(self):
         super(SteerDriveCar,self).__init__()
         pass
-
-    def drive(self,commands):
-        super(SteerDriveCar,self).drive(commands)
-        # this is specific to this chassis set up
-        #steer_speed = commands[0]
-        #drive_speed = commands[1]
-        pass
-
     def forward(self,speed=100):
         self.drive([0,speed])
     def reverse(self,speed=100):
@@ -180,12 +168,6 @@ class DiffDriveCar(Car):
     '''
     def __init__(self,pi):
         super(DiffDriveCar,self).__init__(pi)
-        pass
-    def drive(self,commands):
-        super(DiffDriveCar,self).drive(commands)
-        # this is specific to this chassis set up
-        #left_speed = commands[0]
-        #right_speed = commands[1]
         pass
     def forward(self,speed=100):
         self.drive([speed,speed])

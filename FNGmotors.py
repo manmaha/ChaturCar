@@ -101,18 +101,17 @@ def main():
       @atexit.register
       def cleanup_motors():
           print('EXITING')
-          for m in (m1,m2): m.cleanup()
           pi.stop()
           pass
 
-      params = load(open('MotorParams.yaml').read(), Loader=Loader)
+      params = load(open('MotorParam1.yaml').read(), Loader=Loader)
       motorpins1 = params['motorpins'][0]
       motorpins2 = params['motorpins'][1]
       pi = pigpio.pi()
       pwm_freq = params['PWM_FREQ']
       max_dc = params['MAX_DC']
-      m1 = motor(motorpins1,pi,pwm_freq,max_dc)
-      m2 = motor(motorpins2,pi,pwm_freq,max_dc)
+      m1 = Motor(motorpins1,pi,pwm_freq,max_dc)
+      m2 = Motor(motorpins2,pi,pwm_freq,max_dc)
 
       if args.motor == 'both':
           for m in (m1,m2):m.forward(float(args.gain))
@@ -124,7 +123,6 @@ def main():
 
       time.sleep(float(args.time))
       for m in (m1,m2): m.cleanup()
-      pi.stop()
-
+      
 if __name__ == "__main__":
     main()
