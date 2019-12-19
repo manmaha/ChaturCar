@@ -104,16 +104,16 @@ class Car(object):
       pass
 
     def drive(self,commands):
-	for m,c in  zip(self.motors,commands):
-		m.move(c)
-        self.speed = commands
-        pass
+      for motor, command in  zip(self.motors,commands):
+       direction = command > 0
+       motor.move(abs(command),direction)
+      self.speed = commands
 
     def get_speed(self):
         return self.speed
 
     def stop(self):
-	self.speed = [0.0, 0.0]
+        self.speed = [0.0, 0.0]
         for m in self.motors:
             m.stop()
         pass
@@ -141,7 +141,6 @@ class Car(object):
         self.drive([-50,-50])
         time.sleep(1)
         self.stop()
-
 
     def cleanup(self):
         for m in self.motors:
@@ -177,8 +176,6 @@ class DiffDriveCar(Car):
         self.drive([-speed,speed])
     def steer_right(self,speed=100):
         self.drive([speed,-speed])
-
-
 
 def main():
     print('Testing Steer Drive Model')
