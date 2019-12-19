@@ -13,6 +13,7 @@ import time
 import argparse
 import atexit
 from yaml import load, Loader
+import os
 
 # Motor is an object, setup defined as list of gpiopins and motor_type (A or B)
 # TB6612FNG Motor Driver controls two motors, Motor A and Motor B
@@ -97,6 +98,10 @@ Object with two Motors - can be diff drive or steer drive
 class Car(object):
     def __init__(self):
       params = load(open('MotorParams.yaml').read(), Loader=Loader)
+      try:
+          os.system('sudo pigpiod')
+      except:
+          print('pigpio already running')
       pi = pigpio.pi()
       self.motors = [Motor(gpiopins,pi,params['PWM_FREQ'],params['MAX_DC'])\
        for gpiopins in params['motorpins']]

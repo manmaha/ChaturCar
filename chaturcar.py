@@ -100,22 +100,26 @@ class ChaturDriver(Driver):
         def __init__(self,car,args):
             super(ChaturDriver,self).__init__(car,args)
             #set up Categories
-            avg_steer, avg_drive = self.args.avg_steer, self.args.avg_drive
-            self.categories = {1:[0,avg_drive],2:[-avg_steer,avg_drive],\
-            3:[avg_steer,avg_drive],7:[0,0],\
-            4:[0,-avg_drive],5:[-avg_steer,-avg_drive],6:[avg_steer,-avg_drive]}
+            steer = args.max_steer
+            self.categories = {1:-0.833*steer,2:-0.5*steer,\
+                                3:-0.167*steer,4:0.0,\
+                                5:0.167*steer,6:0.5*steer,\
+                                7:0.833*steer}
             #Start Driving and Check if driver needs to Exit
             self.driving = True
-            car.forward(avg_drive)
+            car.forward(args.max_drive)
             pass
 
         def stop_driving(self):
-            self.driving = False
+            with self._lock:
+                self.driving = False
+                print('Stopped Driving')
             self.car.stop()
             self.car.cleanup()
 
         def is_driving(self):
-            return self.driving
+            with self._lock:
+                return self.driving
 
         def stop(self):
             #self.send_commands([0, - self.get_commands()[1]])
@@ -145,56 +149,35 @@ class ChaturDriver(Driver):
         def get_category(self):
             '''
             Define Classification of Commands to be used in Learning Model
-            		Drive +1 Steer 0 : Class 1
-            		Drive +1 Steer -1 : Class 2
-            		Drive +1 Steer +1 : Class 3
-            		Drive -1 Steer 0 : Class 4
-            		Drive -1 Steer -1 : Class 5
-            		Drive -1 Steer +1 : Class 6
-            		Drive 0 : Class 7
-                    returns a string
+            		Drive +1 Steer -1 : Class 1
+            		Drive +1 Steer -2/3 : Class 2
+            		Drive +1 Steer -1/3 : Class 3
+            		Drive +1 Steer 0 : Class 4
+            		Drive +1 Steer +1/3 : Class 5
+                    Drive +1 Steer +2/3 : Class 6
+                    Drive +1 Steer +1 : Class 7
+                    returns an int
             '''
-            category = 7
-            sensitivity = 0.1
-            steer_value, drive_value = self.get_commands()
+            category = 1
+            sensitivity = 0.08
+            steer_value, _ = self.get_commands()
             # find +1,-1,0 Classification
-            if drive_value > sensitivity:
-                drive = 1
-            elif drive_value > -sensitivity:
-                drive = 0
+            if steer_value > 0.67*self.args.max_steer:
                 category = 7
-            else:
-                drive = -1
-
-            if steer_value > sensitivity:
-                steer = 1
-            elif steer_value > -sensitivity:
-                steer = 0
-            else:
-                steer = -1
-            # Now classify
-
-            if drive == 1:
-                if steer == 0:
-                    category = 1
-                elif steer == -1:
-                    category = 2
-                else:
-                    category = 3
-
-            elif drive == -1:
-                if steer == 0:
-                    category = 4
-                elif steer == -1:
-                    category = 5
-                else:
-                    category = 6
-
+            elif steer_value > 0.33*self.args.max_steer:
+                category = 6
+            elif steer_value > sensitivity:
+                category = 5
+            elif steer_value >= -sensitivity:
+                category = 4
+            elif steer_value > -0.33*self.args.max_steer:
+                category = 3
+            elif steer_value > -0.67*self.args.max_steer:
+                category = 2
             return category
 
-
         def get_commands_from_category(self,category):
-            return self.categories.get(category)
+            return [self.args.max_drive,self.categories.get(category)]
 
         #Web Receiver methods
         #@app.route("/")
@@ -255,8 +238,6 @@ def main():
     parser.add_argument('--testing',default=params['testing'])
     parser.add_argument('--selfdrive',default=params['selfdrive'])
     parser.add_argument('--collectdata',default=params['collectdata'])
-    parser.add_argument('--record_time',default=params['record_time'])
-    parser.add_argument('--drive_time',default=params['drive_time'])
     parser.add_argument('--example', default=params['example'])
     parser.add_argument('--framerate',default=params['framerate'])
     parser.add_argument('--avg_steer',default=params['avg_steer'])

@@ -1,22 +1,20 @@
-avg_drive: 0.5
+avg_drive: 0.45
 avg_steer: 0.5
 awb_mode: auto
 collectdata: 'True'
 drive_step: 0.3
-drive_time: 10
-example: 26
+example: 11
 exposure_mode: sports
-framerate: 5
+framerate: 20
 hostname: 0.0.0.0
 iso: 0
 labels: 'False'
-max_drive: 0.8
+max_drive: 0.4
 max_steer: 1.0
 model: Naive
 modelfile: ChaturCar1.h5
 modelpath: /home/pi/ChaturCar/TrainedModels
 port: 5000
-record_time: 20
 resolution:
 - 150
 - 150

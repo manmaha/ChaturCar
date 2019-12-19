@@ -115,9 +115,12 @@ class ImageProc(object):
 			with picamera.array.PiRGBArray(self.camera) as stream:
 				frame_num = 0
 				for _ in self.camera.capture_continuous(stream,format="rgb",use_video_port=True):
+
 					if not is_driving():
 						print('not driving')
 						break
+					else:
+						print('driving')
 					category = get_category()
 					timestring = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")[:-3]
 					with self._lock:
@@ -180,7 +183,6 @@ def main():
 	params = load(open('ChaturCar.yaml').read(), Loader=Loader)
 	parser = argparse.ArgumentParser(description='Capture Video and Content Frames')
 	parser.add_argument('--example', default=params['example'])
-	parser.add_argument('--record_time', default=params['record_time'])
 	parser.add_argument('--framerate',default=params['framerate'])
 	parser.add_argument('--selfdrive',default=params['selfdrive'])
 	parser.add_argument('--collectdata',default=params['collectdata'])
