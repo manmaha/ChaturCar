@@ -86,7 +86,7 @@ class Motor(object):
     pass
 
   def cleanup(self):
-      self.pi.standby(level=False)
+      self.standby(level=False)
       pass
 
 
@@ -97,11 +97,9 @@ Object with two Motors - can be diff drive or steer drive
 class Car(object):
     def __init__(self):
       params = load(open('MotorParams.yaml').read(), Loader=Loader)
-      motorpins = params['motorpins']
-      pwm_freq = params['PWM_FREQ']
-      max_dc = params['MAX_DC']
       pi = pigpio.pi()
-      self.motors = [motor(gpiopins,pi,pwm_freq,max_dc) for gpiopins in motorpins]
+      self.motors = [Motor(gpiopins,pi,params['PWM_FREQ'],params['MAX_DC'])\
+       for gpiopins in params['motorpins']]
       self.speed = [0.0,0.0]
       self.stop()
       pass
@@ -157,7 +155,7 @@ class SteerDriveCar(Car):
     ''' Steer Drive Car, Motor A = Steer, Motor B = Drive
     '''
     def __init__(self):
-        super(SteerDriveCar,self).__init__(pi)
+        super(SteerDriveCar,self).__init__()
         pass
 
     def drive(self,commands):
@@ -180,7 +178,10 @@ class SteerDriveCar(Car):
 
 
 def main():
-    print('Testing Diff Drive Model')
-    car = cars.DiffDriveCar()
+    print('Testing Steer Drive Model')
+    car = SteerDriveCar()
     car.test()
     car.cleanup()
+
+if __name__=="__main__":
+        main()
