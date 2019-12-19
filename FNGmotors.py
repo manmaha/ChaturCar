@@ -106,8 +106,8 @@ def main():
           pass
 
       params = load(open('MotorParams.yaml').read(), Loader=Loader)
-      motorpins1 = params['motor1']
-      motorpins2 = params['motor2']
+      motorpins1 = params['motorpins'][0]
+      motorpins2 = params['motorpins'][1]
       pi = pigpio.pi()
       pwm_freq = params['PWM_FREQ']
       max_dc = params['MAX_DC']
