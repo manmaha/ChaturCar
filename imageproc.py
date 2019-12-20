@@ -46,11 +46,11 @@ class ImageProc(object):
 		# allow the camera to warmup
 		time.sleep(2)
 		#Now Set Fixed Camera Parameters
-		camera.shutter_speed = camera.exposure_speed
+		#camera.shutter_speed = camera.exposure_speed
 		camera.exposure_mode = params['exposure_mode']
-		g = camera.awb_gains
+		#g = camera.awb_gains
 		camera.awb_mode = params['awb_mode']
-		camera.awb_gains = g
+		#camera.awb_gains = g
 		self.camera = camera
 		self.args = args
 		self.params = params
@@ -80,13 +80,14 @@ class ImageProc(object):
 		collects example data and stores to file in separate directories
 		Classifies the drive/steer data into 7 classes and stores them in relevant Directories
 		'''
+		frame_num = 0
 		with io.BytesIO() as stream:
-			frame_num = 0
 			for _ in self.camera.capture_continuous(stream,format="jpeg",use_video_port=True):
+
+				while is_paused() and not is_driving():
+					time.sleep(0.5)
 				if not is_driving():
 					break
-				while is_paused():
-					time.sleep(0.5)
 				category = get_category()
 				timestring = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")[:-3]
 
@@ -108,7 +109,7 @@ class ImageProc(object):
 				frame_num+=1
 				#if frame_num == self.Max_Frames:
 				#	break
-			print('Finished Collecting {0:d} frames'.format(frame_num))
+		print('Finished Collecting {0:d} frames'.format(frame_num))
 		self.cleanup()
 		pass
 
@@ -118,8 +119,8 @@ class ImageProc(object):
 			capture images for the self driver; sends data for prediction ;
 			also stores them in files for later analysis
 			'''
+			frame_num = 0
 			with picamera.array.PiRGBArray(self.camera) as stream:
-				frame_num = 0
 				for _ in self.camera.capture_continuous(stream,format="rgb",use_video_port=True):
 					if not is_driving():
 						break
@@ -147,7 +148,7 @@ class ImageProc(object):
 					frame_num+=1
 					#if frame_num == self.Max_Frames:
 					#	break
-				print('Finished Recording {0:d} Images'.format(frame_num))
+			print('Finished Recording {0:d} Images'.format(frame_num))
 			self.cleanup()
 			pass
 

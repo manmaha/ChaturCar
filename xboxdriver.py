@@ -177,8 +177,8 @@ def main():
         threads.append(self_drive)
 
       #join all threads
-    for index, thread in enumerate(threads):
-        thread.join()
+    #for index, thread in enumerate(threads):
+    #    thread.join()
 
     pass
 

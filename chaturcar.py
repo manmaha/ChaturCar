@@ -189,7 +189,7 @@ class ChaturDriver(Driver):
                 category = 3
             elif steer_value > -0.67*self.args.max_steer:
                 category = 2
-            print('steer speed',steer_value,' category', category)
+            #print('steer speed',steer_value,' category', category)
             return category
 
         def get_commands_from_category(self,category):
