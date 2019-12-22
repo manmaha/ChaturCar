@@ -113,14 +113,14 @@ def main():
     parser.add_argument('--collectdata',default=params['collectdata'])
     parser.add_argument('--example', default=params['example'])
     parser.add_argument('--framerate',default=params['framerate'])
-    parser.add_argument('--avg_drive',default=params['avg_drive'])
-    parser.add_argument('--avg_steer',default=params['avg_steer'])
     parser.add_argument('--max_steer',default=params['max_steer'])
     parser.add_argument('--max_drive',default=params['max_drive'])
     parser.add_argument('--labels', default=params['labels'])
     parser.add_argument('--modelpath', default=params['modelpath'])
     parser.add_argument('--modelfile', default=params['modelfile'])
     parser.add_argument('--model', default=params['model'])
+    parser.add_argument('--category_names',default=params['category_names'])
+    parser.add_argument('--steer_speeds',default=params['steer_speeds'])
     args = parser.parse_args()
 
     # Cleanup done at exit

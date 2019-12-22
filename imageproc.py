@@ -66,9 +66,9 @@ class ImageProc(object):
 		if args.labels == 'True':
 			self.labels=[]
 		else:
-			for class_dirname in range(1,8):
+			for category_name in params['category_names']:
 				try:
-					os.makedirs(os.path.join(self.dirName,str(class_dirname)))
+					os.makedirs(os.path.join(self.dirName,category_name))
 				except FileExistsError:
 					pass
 					#print('directories exist')
@@ -78,7 +78,7 @@ class ImageProc(object):
 			get_commands=get_commands,is_driving=is_driving,is_paused=is_paused):
 		'''
 		collects example data and stores to file in separate directories
-		Classifies the drive/steer data into 7 classes and stores them in relevant Directories
+		Classifies the steer data into categories and stores them in relevant Directories
 		'''
 		frame_num = 0
 		with io.BytesIO() as stream:
@@ -95,10 +95,10 @@ class ImageProc(object):
 					filepath = self.dirName
 					self.labels.append([category,get_commands()])
 				else:
-					filepath = os.path.join(self.dirName,str(category))
+					filepath = os.path.join(self.dirName,category)
 
 
-				filename = os.path.join(filepath,'img{0:d}_{1:d}_{2}.jpg'\
+				filename = os.path.join(filepath,'img{0:d}-{1}-{2}.jpg'\
 					.format(self.args.example,category,timestring))
 				with open(filename,"wb") as imagefile:
 					imagefile.write(stream.getbuffer())
@@ -136,10 +136,10 @@ class ImageProc(object):
 						filepath = self.dirName
 						self.labels.append([category,get_commands()])
 					else:
-						filepath = os.path.join(self.dirName,str(category))
+						filepath = os.path.join(self.dirName,category)
 
 
-					filename = os.path.join(filepath,'img{0:d}_{1:d}_{2}.jpg'\
+					filename = os.path.join(filepath,'img{0:d}-{1}-{2}.jpg'\
 						.format(self.args.example,category,timestring))
 					#Write to File, using PIL Image class definition
 					Image.fromarray(stream.array).save(filename)

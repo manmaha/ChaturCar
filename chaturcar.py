@@ -7,7 +7,6 @@ Steering and Drive Commands for Training are received through a Web GUI
 Manish Mahajan
 25 September 2019
 '''
-
 import logging
 import time
 import argparse
@@ -101,10 +100,7 @@ class ChaturDriver(Driver):
             super(ChaturDriver,self).__init__(car,args)
             #set up Categories
             steer = args.max_steer
-            self.categories = {1:-0.833*steer,2:-0.5*steer,\
-                                3:-0.167*steer,4:0.0,\
-                                5:0.167*steer,6:0.5*steer,\
-                                7:0.833*steer}
+            self.categories = dict(zip(args.category_names,args.steer_speeds))
             #Start Driving and Check if driver needs to Exit
             self.driving = True
             self.pausing = False
@@ -164,33 +160,27 @@ class ChaturDriver(Driver):
         def get_category(self):
             '''
             Define Classification of Commands to be used in Learning Model
-            		Drive +1 Steer -1 : Class 1
-            		Drive +1 Steer -2/3 : Class 2
-            		Drive +1 Steer -1/3 : Class 3
-            		Drive +1 Steer 0 : Class 4
-            		Drive +1 Steer +1/3 : Class 5
-                    Drive +1 Steer +2/3 : Class 6
-                    Drive +1 Steer +1 : Class 7
-                    returns an int
+            		Steer > 0.5 : 'hard_right'
+            		Steer > 0 :'med_right'
+            		Steer = 0 : 'straight'
+            		Steer > -0.5 :  'med_left'
+            		Steer > -1 :  'hard_left'
+                    returns a String with Category Name
             '''
-            category = 1
+            category_index = 0
             sensitivity = 0.08
             steer_value, _ = self.get_commands()
             # find +1,-1,0 Classification
-            if steer_value > 0.67*self.args.max_steer:
-                category = 7
-            elif steer_value > 0.33*self.args.max_steer:
-                category = 6
+            if steer_value > 0.5*self.args.max_steer:
+                category_index = 4
             elif steer_value > sensitivity:
-                category = 5
+                category_index = 3
             elif steer_value >= -sensitivity:
-                category = 4
-            elif steer_value > -0.33*self.args.max_steer:
-                category = 3
-            elif steer_value > -0.67*self.args.max_steer:
-                category = 2
+                category_index = 2
+            elif steer_value > -0.5*self.args.max_steer:
+                category_index = 3
             #print('steer speed',steer_value,' category', category)
-            return category
+            return self.args.category_names[category_index]
 
         def get_commands_from_category(self,category):
             return [self.args.max_drive,self.categories.get(category)]
@@ -258,10 +248,9 @@ def main():
     parser.add_argument('--collectdata',default=params['collectdata'])
     parser.add_argument('--example', default=params['example'])
     parser.add_argument('--framerate',default=params['framerate'])
-    parser.add_argument('--avg_steer',default=params['avg_steer'])
-    parser.add_argument('--avg_drive',default=params['avg_drive'])
     parser.add_argument('--labels', default=params['labels'])
-
+    parser.add_argument('--category_names',default=params['category_names'])
+    parser.add_argument('--steer_speeds',default=params['steer_speeds'])
     args = parser.parse_args()
 
     # Cleanup done at exit
