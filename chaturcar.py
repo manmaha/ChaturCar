@@ -170,7 +170,6 @@ class ChaturDriver(Driver):
             category_index = 0
             sensitivity = 0.08
             steer_value, _ = self.get_commands()
-            # find +1,-1,0 Classification
             if steer_value > 0.5*self.args.max_steer:
                 category_index = 4
             elif steer_value > sensitivity:
@@ -178,8 +177,8 @@ class ChaturDriver(Driver):
             elif steer_value >= -sensitivity:
                 category_index = 2
             elif steer_value > -0.5*self.args.max_steer:
-                category_index = 3
-            #print('steer speed',steer_value,' category', category)
+                category_index = 1
+            #print('steer speed',steer_value,' category', self.args.category_names[category_index])
             return self.args.category_names[category_index]
 
         def get_commands_from_category(self,category):

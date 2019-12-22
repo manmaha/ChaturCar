@@ -47,8 +47,6 @@ class XBoxThread(threading.Thread):
         threading.Thread.__init__(self)
         self.driver = driver
         self.joystick = joystick
-        self.steer_step = params['steer_step']
-        self.drive_step = params['drive_step']
         self.max_steer =  params['max_steer']
         self.max_drive =params['max_drive']
 

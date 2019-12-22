@@ -45,12 +45,8 @@ class ImageProc(object):
 		camera.iso = params['iso'] #800 for indoors, 200 outdoors
 		# allow the camera to warmup
 		time.sleep(2)
-		#Now Set Fixed Camera Parameters
-		#camera.shutter_speed = camera.exposure_speed
 		camera.exposure_mode = params['exposure_mode']
-		#g = camera.awb_gains
 		camera.awb_mode = params['awb_mode']
-		#camera.awb_gains = g
 		self.camera = camera
 		self.args = args
 		self.params = params
@@ -109,7 +105,7 @@ class ImageProc(object):
 				frame_num+=1
 				#if frame_num == self.Max_Frames:
 				#	break
-		print('Finished Collecting {0:d} frames'.format(frame_num))
+		print('Finished Collecting {0:d} frames in {1} mins'.format(frame_num,frame_num/(self.args.framerate*60.0)))
 		self.cleanup()
 		pass
 
