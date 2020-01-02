@@ -104,14 +104,17 @@ class ChaturDriver(Driver):
             #Start Driving and Check if driver needs to Exit
             self.driving = True
             self.pausing = False
-            car.forward(args.max_drive)
+            self.fast_capture = False #increase framerate on turns to generate balanced data
+            car.forward(args.max_drive*0.5)
+            time.sleep(1)
+            self.pause() #put driver in pause mode - press A to start
             pass
 
         def stop_driving(self):
             with self._lock:
                 self.driving = False
                 print('Stopped Driving')
-            self.car.stop()
+            self.stop()
             self.car.cleanup()
 
         def is_driving(self):
@@ -119,20 +122,20 @@ class ChaturDriver(Driver):
                 return self.driving
 
         def stop(self):
-            #self.send_commands([0, - self.get_commands()[1]])
-            #time.sleep(0.25)
+            self.send_commands([0, - self.get_commands()[1]])
+            time.sleep(0.05)
             self.car.stop()
             #return self.web_interface()
 
         def pause(self):
             with self._lock:
                 self.pausing = True
-            self.car.stop()
+            self.stop()
 
         def start_after_pause(self):
             with self._lock:
                 self.pausing = False
-            self.car.forward(self.args.max_drive)
+            self.car.forward(self.args.max_drive*0.65)
 
         def is_paused(self):
             with self._lock:
@@ -170,15 +173,19 @@ class ChaturDriver(Driver):
             category_index = 0
             sensitivity = 0.08
             steer_value, _ = self.get_commands()
-            if steer_value > 0.5*self.args.max_steer:
-                category_index = 4
-            elif steer_value > sensitivity:
-                category_index = 3
-            elif steer_value >= -sensitivity:
-                category_index = 2
-            elif steer_value > -0.5*self.args.max_steer:
-                category_index = 1
+#            if steer_value > 0.5*self.args.max_steer:
+#                category_index = 4
+#            elif steer_value > sensitivity:
+#                category_index = 3
+#            elif steer_value >= -sensitivity:
+#                category_index = 2
+#            elif steer_value > -0.5*self.args.max_steer:
+#                category_index = 1
             #print('steer speed',steer_value,' category', self.args.category_names[category_index])
+            if steer_value > sensitivity:
+              category_index = 2
+            elif steer_value >= -sensitivity:
+              category_index = 1
             return self.args.category_names[category_index]
 
         def get_commands_from_category(self,category):
@@ -250,6 +257,8 @@ def main():
     parser.add_argument('--labels', default=params['labels'])
     parser.add_argument('--category_names',default=params['category_names'])
     parser.add_argument('--steer_speeds',default=params['steer_speeds'])
+    parser.add_argument('--max_steer',default=params['max_steer'])
+    parser.add_argument('--max_drive',default=params['max_drive'])
     args = parser.parse_args()
 
     # Cleanup done at exit
@@ -261,7 +270,7 @@ def main():
         #server.shutdown()
         pass
 
-    car = ChaturCar()
+    car = FNGCar()
     driver =ChaturDriver(car,args)
     car.test()
 

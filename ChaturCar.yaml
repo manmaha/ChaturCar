@@ -1,21 +1,19 @@
 awb_mode: auto
 category_names:
-- hard_left
-- med_left
+- left
 - straight
-- med_right
-- hard_right
+- right
 collectdata: 'True'
-example: 1
+example: 12
 exposure_mode: sports
-framerate: 20
+framerate: 5
 hostname: 0.0.0.0
 iso: 0
 labels: 'False'
-max_drive: 0.8
+max_drive: 1.0
 max_steer: 1.0
 model: Naive
-modelfile: ChaturCar3.h5
+modelfile: ChaturCar5.h5
 modelpath: /home/pi/ChaturCar/TrainedModels
 port: 5000
 resolution:
@@ -26,9 +24,7 @@ self_drive_dirname: /home/pi/ChaturCar/TestData
 selfdrive: 'False'
 steer_speeds:
 - -0.75
-- -0.25
 - 0
-- 0.25
 - 0.75
 testing: 'False'
-training_dirname: /home/pi/ChaturCar/TrainData1
+training_dirname: /home/pi/ChaturCar/TrainData3

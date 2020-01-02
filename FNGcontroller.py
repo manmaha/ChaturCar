@@ -101,7 +101,7 @@ class Car(object):
       try:
           os.system('sudo pigpiod')
       except:
-          print('pigpio already running')
+          print('pigpio already running')      
       pi = pigpio.pi()
       self.motors = [Motor(gpiopins,pi,params['PWM_FREQ'],params['MAX_DC'])\
        for gpiopins in params['motorpins']]

@@ -57,29 +57,11 @@ class XBoxThread(threading.Thread):
                 changed = False
                 if event.type == 3:
                     if event.code == 1:         #Y axis on left stick
-                        #print(event.value)
-                        #change = -scale(event.value,(0,65535),\
-                        #        (-self.max_drive,self.max_drive)) - drive_speed
-                        #if abs(change)>self.drive_step:
-                        #    drive_speed = clamp(drive_speed + change,\
-                        #    -self.max_drive,self.max_drive)
-                            #print('changed drive speed', drive_speed)
-                        #    changed = True
                         #peculiarity in the way XBox controller works, inverting Y axis
                         drive_speed = -scale(event.value,(0,65535),\
                                         (-self.max_drive,self.max_drive))
                         changed = True
-                        #        (-self.max_drive,self.max_drive))
                     if event.code == 2:         #X axis on right stick
-                        #print(event.value)
-                        #change = scale(event.value,(0,65535),\
-                        #        (-self.max_steer,self.max_steer))-steer_speed
-                        #print(change)
-                        #if abs(change)>self.steer_step:
-                        #    steer_speed = clamp(steer_speed + change,\
-                        #    -self.max_steer,self.max_steer)
-                            #print('changed steer speed', steer_speed)
-                        #    changed = True
                         steer_speed = scale(event.value,(0,65535),\
                                (-self.max_steer,self.max_steer))
                         changed = True

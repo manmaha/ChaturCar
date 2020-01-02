@@ -30,7 +30,7 @@ def is_driving():
 def is_paused():
 	return False
 def get_category():
-	return 1
+	return 'straight'
 #####
 
 class ImageProc(object):
@@ -53,12 +53,14 @@ class ImageProc(object):
 		self._lock=threading.RLock()
 		self.image_array = PiRGBArray(camera, size=params['resolution'])
 		self.frame_num = 0
-		#self.Max_Frames = int(args.record_time)*int(args.framerate)
 		#create requisite Directories
 		if args.selfdrive == 'True':
-			self.dirName = params['self_drive_dirname']
+			self.dirName = os.path.join(params['self_drive_dirname'],\
+				'Example{0}'.format(args.example))
 		else:
-			self.dirName = params['training_dirname']
+			self.dirName = os.path.join(params['training_dirname'],\
+				'Example{0}'.format(args.example))
+
 		if args.labels == 'True':
 			self.labels=[]
 		else:
@@ -67,7 +69,6 @@ class ImageProc(object):
 					os.makedirs(os.path.join(self.dirName,category_name))
 				except FileExistsError:
 					pass
-					#print('directories exist')
 		pass
 
 	def collect_data(self,get_category=get_category,\
@@ -76,16 +77,21 @@ class ImageProc(object):
 		collects example data and stores to file in separate directories
 		Classifies the steer data into categories and stores them in relevant Directories
 		'''
+		start_time = time.time()
 		frame_num = 0
 		with io.BytesIO() as stream:
 			for _ in self.camera.capture_continuous(stream,format="jpeg",use_video_port=True):
 
-				while is_paused() and not is_driving():
+				while is_paused() and is_driving():
 					time.sleep(0.5)
 				if not is_driving():
 					break
 				category = get_category()
-				timestring = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")[:-3]
+				if category == 'straight':
+					self.camera.framerate = self.args.framerate 
+				else:
+					self.camera.framerate = self.args.framerate *10
+				timestring = datetime.now().strftime("%Y%m%d%H%M%S-%f")[:-3]
 
 				if self.args.labels == 'True':
 					filepath = self.dirName
@@ -101,11 +107,9 @@ class ImageProc(object):
 				# clear the stream in preparation for the next frame
 				stream.seek(0)
 				stream.truncate(0)
-				#print('Category', category,'Commands', get_commands(), 'Frame ',frame_num)
-				frame_num+=1
-				#if frame_num == self.Max_Frames:
-				#	break
-		print('Finished Collecting {0:d} frames in {1} mins'.format(frame_num,frame_num/(self.args.framerate*60.0)))
+				frame_num +=1
+		print('Finished Collecting {0:d} frames in {1} mins'.\
+			format(frame_num,(time.time()-start_time)/60.0))
 		self.cleanup()
 		pass
 
@@ -118,12 +122,12 @@ class ImageProc(object):
 			frame_num = 0
 			with picamera.array.PiRGBArray(self.camera) as stream:
 				for _ in self.camera.capture_continuous(stream,format="rgb",use_video_port=True):
+					while is_paused and is_driving():
+						time.sleep(0.05)
 					if not is_driving():
 						break
-					while is_paused():
-						time.sleep(0.5)
 					category = get_category()
-					timestring = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")[:-3]
+					timestring = datetime.now().strftime("%Y%m%d%H%M%S-%f")[:-3]
 					with self._lock:
 						self.image_array=stream
 						self.frame_num+=1
