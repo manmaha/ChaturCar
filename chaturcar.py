@@ -100,11 +100,11 @@ class ChaturDriver(Driver):
             super(ChaturDriver,self).__init__(car,args)
             #set up Categories
             steer = args.max_steer
-            self.categories = dict(zip(args.category_names,args.steer_speeds))
+            self.categories = dict(zip(range(len(args.category_names)),args.steer_speeds))
             #Start Driving and Check if driver needs to Exit
             self.driving = True
-            self.pausing = False
-            self.fast_capture = False #increase framerate on turns to generate balanced data
+            self.pausing = True
+            #self.fast_capture = True #increase framerate on turns to generate balanced data
             car.forward(args.max_drive*0.5)
             time.sleep(1)
             self.pause() #put driver in pause mode - press A to start
@@ -149,7 +149,7 @@ class ChaturDriver(Driver):
             '''
             with self._lock:
                 self.car.drive(commands)
-            #print('sent to car ',commands)
+            print('sent to car ',commands)
 
         def get_commands(self):
             '''
@@ -189,7 +189,7 @@ class ChaturDriver(Driver):
             return self.args.category_names[category_index]
 
         def get_commands_from_category(self,category):
-            return [self.args.max_drive,self.categories.get(category)]
+            return [self.categories.get(category),self.args.max_drive]
 
         #Web Receiver methods
         #@app.route("/")
@@ -222,20 +222,30 @@ class ChaturDriver(Driver):
             import models
             #Choose Model
             if self.args.model == 'Trained':
-                model = Models.Trained_Model(self.args)
+                model = models.Trained_Model(self.args)
             else:
-                model = Models.Naive_Model(self.args)
+                model = models.Naive_Model(self.args)
             #Max_Frames = self.args.drive_time*self.args.framerate
             #for frame_num in range(Max_Frames):
+            frame_num = 0;
+            if self.is_paused(): self.start_after_pause()
             while is_driving():
-                while is_paused():
-                    time.sleep(0.25)
-                while frame_num >= collector.get_frame_num(): #new frame has not been posted
-                    pass
+                #print('Is Driving', is_driving(), 'Is Paused', is_paused())
+                while is_paused() and is_driving():
+                    time.sleep(0.05)
+                check_frame = collector.get_frame_num()
+                #print('frame_num ',frame_num,'check_frame ',check_frame)
+                while frame_num >= check_frame: #new frame has not been posted
+                    check_frame = collector.get_frame_num()
                 #new image seen
+                frame_num = check_frame #update frame_num
                 data = collector.get_image_array()
+                #print('sending for prediction')
                 category = model.predict_category(data)
-                self.send_commands(self.get_commands_from_category(category))
+                print('predicted: ', category)
+                commands = self.get_commands_from_category(category)
+                #print(commands)
+                self.send_commands(commands)
 
 
 

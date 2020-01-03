@@ -4,17 +4,17 @@ category_names:
 - straight
 - right
 collectdata: 'True'
-example: 12
+example: 34
 exposure_mode: sports
-framerate: 5
+framerate: 50
 hostname: 0.0.0.0
 iso: 0
 labels: 'False'
-max_drive: 1.0
+max_drive: 0.9
 max_steer: 1.0
-model: Naive
-modelfile: ChaturCar5.h5
-modelpath: /home/pi/ChaturCar/TrainedModels
+model: Trained
+modelfile: ChaturCar3.h5
+modelpath: /home/pi/ChaturCar/ChaturModels
 port: 5000
 resolution:
 - 640
@@ -23,8 +23,8 @@ rotation: 180
 self_drive_dirname: /home/pi/ChaturCar/TestData
 selfdrive: 'False'
 steer_speeds:
-- -0.75
+- -1.0
 - 0
-- 0.75
+- 1.0
 testing: 'False'
 training_dirname: /home/pi/ChaturCar/TrainData3

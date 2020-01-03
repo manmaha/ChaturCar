@@ -88,9 +88,9 @@ class ImageProc(object):
 					break
 				category = get_category()
 				if category == 'straight':
-					self.camera.framerate = self.args.framerate 
+					self.camera.framerate = self.args.framerate
 				else:
-					self.camera.framerate = self.args.framerate *10
+					self.camera.framerate = max(50,self.args.framerate *25)
 				timestring = datetime.now().strftime("%Y%m%d%H%M%S-%f")[:-3]
 
 				if self.args.labels == 'True':
@@ -120,9 +120,10 @@ class ImageProc(object):
 			also stores them in files for later analysis
 			'''
 			frame_num = 0
-			with picamera.array.PiRGBArray(self.camera) as stream:
+			with PiRGBArray(self.camera) as stream:
 				for _ in self.camera.capture_continuous(stream,format="rgb",use_video_port=True):
-					while is_paused and is_driving():
+					#print(is_paused(), is_driving())
+					while is_paused() and is_driving():
 						time.sleep(0.05)
 					if not is_driving():
 						break

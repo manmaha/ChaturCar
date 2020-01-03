@@ -8,7 +8,7 @@ from PIL import Image
 '''
 Contains Implementations for Models for Generating ChaturCar commands
 input = data (image)
-output = Category = 1 to 7
+output = Category = 1 to 3
 Manish Mahajan
 26 Sep 2019
 '''
@@ -22,7 +22,7 @@ class Naive_Model(Models):
     def __init__(self,args):
         super(Naive_Model,self).__init__(args)
     def predict_category_proba(self,data):
-        prob_array = np.random.random(7)
+        prob_array = np.random.random(3)
         prob_array = prob_array/np.sum(prob_array)
         return prob_array
 
@@ -30,6 +30,7 @@ class Trained_Model(Models):
     def __init__(self,args):
         super(Trained_Model,self).__init__(args)
         self.model = tf.keras.models.load_model(os.path.join(args.modelpath,args.modelfile))
+        print('loaded model, ready to drive')
     def predict_category_proba(self,x):
         x = x/255.
         x = np.expand_dims(x,axis=0)

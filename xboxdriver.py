@@ -119,7 +119,7 @@ def main():
     car = chaturcar.FNGCar()
     driver = chaturcar.ChaturDriver(car,args)
     #create joystick object and start xbox thread
-    if args.collectdata =='True' or args.Testing =='True':
+    if args.collectdata =='True' or args.testing =='True'or args.selfdrive == 'True':
         joystick = joysticks.JoyStick('Xbox Wireless Controller').joystick
         if not joystick:
             car.stop()
@@ -140,7 +140,7 @@ def main():
             args=(driver.get_category,driver.get_commands,driver.is_driving,\
             driver.is_paused,),daemon=False)
         collect_data.start()
-        print('Now Collecting Data')
+        print('Starting Collect Data Module')
         threads.append(collect_data)
 
     #self drive
@@ -149,11 +149,12 @@ def main():
             args=(driver.get_category,driver.get_commands,\
              driver.is_driving,driver.is_paused,),daemon=False)
         capture_image.start()
+        print('Starting Image Capture Module')
         threads.append(capture_image)
-        self_drive = threading.Thread(target=driver.self_drive,\
-                args=(collector,driver.is_driving,),daemon=True)
+        self_drive = threading.Thread(target=driver.self_driver,\
+                args=(collector,driver.is_driving,driver.is_paused,),daemon=False)
         self_drive.start()
-        print('Now Self Driving')
+        print('Starting Self Driving Module')
         threads.append(self_drive)
 
       #join all threads
