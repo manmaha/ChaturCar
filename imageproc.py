@@ -88,9 +88,10 @@ class ImageProc(object):
 					break
 				category = get_category()
 				if category == 'straight':
-					self.camera.framerate = self.args.framerate
+					self.camera.framerate = self.args.framerate/10
+					#capture stright category at a sampling rate of 10%
 				else:
-					self.camera.framerate = max(50,self.args.framerate *25)
+					self.camera.framerate = min(50,self.args.framerate)
 				timestring = datetime.now().strftime("%Y%m%d%H%M%S-%f")[:-3]
 
 				if self.args.labels == 'True':

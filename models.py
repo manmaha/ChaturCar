@@ -4,7 +4,7 @@ import os
 from yaml import load, Loader, dump
 import argparse
 from PIL import Image
-
+from tensorflow.keras.preprocessing import image
 '''
 Contains Implementations for Models for Generating ChaturCar commands
 input = data (image)
@@ -43,7 +43,7 @@ def main():
     parser.add_argument('--modelfile', default=params['modelfile'])
     args = parser.parse_args()
     m = Trained_Model(args)
-    img = Image.open('/home/pi/ChaturCar/TrainedModels/test.jpg').resize((150,150))
+    img = image.load_img('/home/pi/ChaturCar/ChaturModels/test.jpg',target_size=(640,480))#.resize((640,480))
     print(m.predict_category(np.asarray(img)))
 	# test on one file
 if __name__=="__main__":

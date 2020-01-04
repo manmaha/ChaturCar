@@ -4,7 +4,7 @@ category_names:
 - straight
 - right
 collectdata: 'True'
-example: 34
+example: 57
 exposure_mode: sports
 framerate: 50
 hostname: 0.0.0.0
@@ -13,7 +13,7 @@ labels: 'False'
 max_drive: 0.9
 max_steer: 1.0
 model: Trained
-modelfile: ChaturCar3.h5
+modelfile: ChaturCar2.h5
 modelpath: /home/pi/ChaturCar/ChaturModels
 port: 5000
 resolution:

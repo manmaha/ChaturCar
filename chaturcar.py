@@ -149,7 +149,7 @@ class ChaturDriver(Driver):
             '''
             with self._lock:
                 self.car.drive(commands)
-            print('sent to car ',commands)
+            #print('sent to car ',commands)
 
         def get_commands(self):
             '''
